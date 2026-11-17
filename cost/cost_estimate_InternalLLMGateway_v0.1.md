@@ -1,6 +1,6 @@
 # Cost Estimate — Internal LLM gateway on AWS, v0.1
 
-> **Generated, read-only snapshot of the estimate model.** The master is the Excel workbook built from the cost estimate template (`CostEstimate_InternalLLMGateway_v0.1.xlsx`, kept locally and not committed in this change); it holds the formulas, dropdowns, rate lookups and checks. Numbers here do not recalculate — change the workbook instead. A Japanese version is in `cost_estimate_InternalLLMGateway_v0.1_jp.md`.
+> **Generated, read-only snapshot of the estimate model.** The master is the Excel workbook built from the cost estimate template (`CostEstimate_InternalLLMGateway_v0.1.xlsx`; Japanese workbook: `CostEstimate_InternalLLMGateway_v0.1_jp.xlsx`); it holds the formulas, dropdowns, rate lookups and checks. Numbers here do not recalculate — change the workbook instead. A Japanese version is in `cost_estimate_InternalLLMGateway_v0.1_jp.md`.
 
 > Purpose: internal budget approval in the design phase — **a budget estimate, not a quote** · Currency: JPY (line items excl. tax) · Prices: AWS list prices checked 2026-11-17, JPY 160/USD · Parameters: PM 10%, contingency 15% (applied to recurring: Yes), tax 10%, **24 recurring months in grand total** (24-month operation period). Model inference (Bedrock tokens charged back to teams) is **not** in the totals; see §7.
 
