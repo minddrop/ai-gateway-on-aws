@@ -17,7 +17,7 @@ Fill it in using the writing conventions in ../../README.md. Delete this comment
 ├── config/            # LiteLLM config.yaml per environment
 ├── infra/             # IaC modules and per-environment variables
 ├── guardrails/        # In-VPC guardrail service (if built here)
-├── clients/           # litellm-token helper; Intune payloads for Claude Code and Codex CLI
+├── clients/           # key helper; Intune payloads for Claude Code and Codex CLI
 ├── tests/
 │   ├── smoke/         # Post-deploy checks
 │   └── gates/         # Automated launch gates V-1 … V-n
@@ -58,7 +58,7 @@ Fill it in using the writing conventions in ../../README.md. Delete this comment
 |---|---|---|---|---|
 | Config validation | `config.yaml` parses; security-critical values are as required | [fill] | Every PR | 100 % of 04 §4.2 |
 | IaC checks | Plan, policy checks (region, tags, public exposure) | [fill] | Every PR | [fill] |
-| Smoke | JWT call, key call, streaming, spend row written | [fill] | After every deploy | [fill] |
+| Smoke | Virtual-key call, streaming call, spend row written | [fill] | After every deploy | [fill] |
 | Launch gates | V-1 … V-n | [fill] | Before release; every LiteLLM upgrade | All pass |
 | Load | Throughput and latency overhead | [fill] | [default: before launch; quarterly] | PRF-M01 … PRF-M04 |
 | DR drill | Failover to Osaka | [fill] | [default: twice a year] | AVL-M02, AVL-M03 |

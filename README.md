@@ -13,13 +13,14 @@ The design analysis behind it is in [`../llm-gateway-comparison`](../llm-gateway
 | 02 | [Architecture and design](docs/en/02-architecture-and-design.md) | How it is built; data model; security design; DR; verification and traceability | Platform engineering |
 | 03 | [Installation and setup](docs/en/03-installation.md) | Local stack; bootstrapping a new AWS environment; teardown | Platform engineering |
 | 04 | [Configuration reference](docs/en/04-configuration.md) | Every setting, secret and switch, and which are security-critical | Platform engineering |
-| 05 | [User guide](docs/en/05-user-guide.md) | Getting access, tool setup, tasks for users and team admins | Product owner |
+| 05 | [User guide](docs/en/05-user-guide.md) | Getting access, tool setup, tasks for users and team leads | Product owner |
 | 06 | [API reference](docs/en/06-api-reference.md) | Endpoints, auth, errors, limits, versioning | Platform engineering |
 | 07 | [Operations runbook](docs/en/07-operations-runbook.md) | Deploy, rollback, alerts, incidents, DR, maintenance | On-call / SRE |
 | 08 | [Troubleshooting and FAQ](docs/en/08-troubleshooting-faq.md) | Symptoms, causes, fixes; common questions | Support + platform |
 | 09 | [Development guide](docs/en/09-development-guide.md) | Repo layout, workflow, LiteLLM upgrades, tests | Platform engineering |
 | 10 | [Release notes](docs/en/10-release-notes.md) | What changed and what callers must do | Platform engineering |
 | 11 | [Appendices](docs/en/11-appendices.md) | Glossary, links, contacts, approval checklist | Documentation owner |
+| ADR | [Decision records](docs/en/adr/) | Why one significant design choice was made; one file per decision, copied from [`TEMPLATE.md`](docs/en/adr/TEMPLATE.md) | Decision owner |
 
 ## Cost estimate
 
@@ -68,7 +69,7 @@ Each fact has one home. Other documents refer to it (for example "see 04 §4.3")
 | Targets (SLO, RTO/RPO, latency) and requirement text | 01 | 00 §1.4 quotes the IDs only |
 | Model catalog: what is needed | 01 §6.5 | 02 §5.1, 04 §4.1 |
 | Data classification and retention periods | 01 §8 | 02 §7.1 (how retention is enforced) |
-| Design decisions, components, data stores, threat model | 02 | 03, 07 |
+| Design decisions, components, data stores, threat model | 02 (decisions: a summary row in §13; full reasoning in `adr/D-<n>-*.md` when needed) | 03, 07 |
 | Requirement ↔ design ↔ test links | 02 §11.3 | 01 §10 |
 | Launch gate results | 02 §11.2 | 07, 09, 10 |
 | Environments: URLs, accounts, regions | 03 §2 | 02 §10, 04 §2.1, 07 |
@@ -128,6 +129,8 @@ Never leave a cell blank, and never delete a field from a block or a pre-filled 
 
 Some sections are a list of entries with the same fields: user tasks (05 §5), endpoint details (06 §3.4), incident procedures (07 §6) and releases (10 §3). Each of these sections starts with a block template in a code block. Copy it for each entry, and keep every field, in the same order.
 
+Decision records work the same way at file level: copy [`docs/en/adr/TEMPLATE.md`](docs/en/adr/TEMPLATE.md) to `docs/en/adr/D-<n>-<short-title>.md`, with the same `D-n` as its row in 02 §13, and keep every section.
+
 ### References
 
 | Reference to | Write it as | Example |
@@ -155,4 +158,4 @@ Before a document goes to review, this prints nothing (replace `NN` with the fil
 grep -nE '\[(fill|default)[]:]|EXAMPLE|<!--|\|[[:space:]]*\|' docs/en/NN-*.md
 ```
 
-It finds markers that were not replaced, examples, instruction comments and blank table cells. `grep -n 'TBD (' docs/en/NN-*.md` lists the gaps that are still open. Before the set is approved, run both over `docs/` and tick the checklist in 11 §D.
+It finds markers that were not replaced, examples, instruction comments and blank table cells. For a decision record, use `docs/en/adr/D-<n>-*.md` as the path. `grep -n 'TBD (' docs/en/NN-*.md` lists the gaps that are still open. Before the set is approved, run both over `docs/` with `grep -rn --exclude=TEMPLATE.md`, since the ADR template keeps its markers, and tick the checklist in 11 §D.

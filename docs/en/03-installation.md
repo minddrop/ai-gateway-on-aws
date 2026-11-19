@@ -18,7 +18,7 @@ Fill it in using the writing conventions in ../../README.md. Delete this comment
 | [fill: Terraform or CDK] | [fill: x.y] | Pinned in [fill: file] |
 | AWS CLI v2 | [fill: x.y or later] | Sign in with IAM Identity Center (`aws sso login`), never long-lived keys |
 | Python | [fill: x.y] | Launch-gate and smoke-test scripts |
-| `litellm-token` helper | [fill: version] | Prints an Entra token for the gateway [CMP §2.3.4] |
+| Key helper | [fill: version] | Prints the user's virtual key from the OS credential store for Claude Code and Codex CLI [CMP §2.3.4] |
 | Access: repository | — | [fill: who grants it] |
 | Access: AWS accounts | — | [fill: permission set names per environment; who approves] |
 | Access: secrets | — | [fill: who can read which secret]. Reviewed as admin access [CMP §2.3.5]. |
@@ -82,15 +82,15 @@ Fill it in using the writing conventions in ../../README.md. Delete this comment
 6. **Secrets.** Create these in Secrets Manager before the first deploy: master key, salt key, licence key, DB credentials (04 §3). **The salt key can never change after first start without a re-encryption plan.**
    - Run: [fill: IaC module or command]
    - Expect: `aws secretsmanager list-secrets` shows the four secrets, with the names given in 04 §2.1.
-7. **Entra.** Register the app, set app roles and group claims, and set the Conditional Access policies [CMP §2.1–2.3].
+7. **Entra.** Register the app as single-tenant with "Assignment required", assign the app roles through the groups in 02 §4.2, and set the Conditional Access policies in 02 §4.4 [CMP §2.1–2.3].
    - Run: [fill: script, or Entra admin center path]
-   - Expect: a token from `litellm-token` carries the gateway audience and the group or role claims ([fill: how to decode and check it]).
+   - Expect: a test user in each role group signs in to the Admin UI and gets the matching LiteLLM role and teams ([fill: how to check them]); a user not assigned to the app is refused.
 8. **Infrastructure.**
    - Run: `[fill: IaC command]` with `[fill: environment variable file]`
    - Expect: the apply finishes without errors, and a second plan shows no changes.
 9. **Post-install checks.**
    - Run: the smoke tests (`[fill: smoke test command]`), then the launch gates (02 §11.2).
-   - Expect: `/health/readiness` returns healthy through the ALB; a request from outside the allowlist is refused; a JWT request and a virtual-key request both succeed and both write spend rows; every launch gate passes before any real user is admitted.
+   - Expect: `/health/readiness` returns healthy through the ALB; a request from outside the allowlist is refused; a request with a key created in the Admin UI succeeds and writes a spend row; every launch gate passes before any real user is admitted.
 10. **Enable retention locks last.** Turn on S3 Object Lock only after launch gate V-1 has passed [CMP §2.10].
     - Run: [fill: IaC change or command]
     - Expect: `aws s3api get-object-lock-configuration --bucket <bucket>` shows `"ObjectLockEnabled": "Enabled"` for each log bucket.
@@ -104,7 +104,7 @@ Fill it in using the writing conventions in ../../README.md. Delete this comment
    - Expect: the record names each bucket, the date its retention ends, and the team that owns it after teardown.
 2. **Revoke client access.** Remove the Entra app registration and the Intune client configuration.
    - Run: [fill]
-   - Expect: `litellm-token` fails for a test user.
+   - Expect: Admin UI sign-in fails for a test user, and the key helper is gone from a test device.
 3. **Delete credentials.** Delete the virtual keys and the master key. Schedule KMS key deletion only after the retained data no longer needs it.
    - Run: [fill]
    - Expect: [fill]

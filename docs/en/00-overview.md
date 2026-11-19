@@ -27,7 +27,7 @@ Version history: system releases are in 10 Release notes. The two baselines keep
 
 ## 1. System overview
 
-Internal LLM gateway gives engineers and internal workloads one OpenAI- and Anthropic-compatible endpoint for large language models processed in Japan. Users sign in with Entra ID (Okta Verify MFA, Intune-compliant device) to create a personal virtual key; every call carries a virtual key, comes from an allowlisted office or DC network, is charged to a team, and is held to budgets and rate limits [CMP §2.3]. It runs on LiteLLM Proxy in AWS Tokyo, with Osaka for disaster recovery [CMP §7.2]. What it replaces is TBD (Product owner, 2026-12-18) (01 Q-2), and it serves about 5,000 employees, about 300 concurrent users at peak [CMP A-9]. The system is in the design phase: nothing is built yet.
+Internal LLM gateway gives engineers and internal workloads one OpenAI- and Anthropic-compatible endpoint for large language models processed in Japan. Users sign in with Entra ID (Okta Verify MFA, Intune-compliant device) to create their own virtual key for their team; every call carries a virtual key, comes from an allowlisted office or DC network, is charged to a team, and is held to budgets and rate limits [CMP §2.3]. It runs on LiteLLM Proxy in AWS Tokyo, with Osaka for disaster recovery [CMP §7.2]. What it replaces is TBD (Product owner, 2026-12-18) (01 Q-2), and it serves about 5,000 employees, about 300 concurrent users at peak [CMP A-9]. The system is in the design phase: nothing is built yet.
 
 ### 1.1 Scope
 
@@ -39,8 +39,8 @@ Internal LLM gateway gives engineers and internal workloads one OpenAI- and Anth
 | Capability | What it does | Primary users | Requirement IDs |
 |---|---|---|---|
 | Model access | One endpoint for the approved, Japan-resident models | Engineers, workloads | FUN-001 to FUN-009, MDL-001 to MDL-011, MDL-101 to MDL-105 |
-| Identity | Entra sign-in (MFA, compliant device) to the Admin UI, where each user creates their own virtual key; every API call uses a virtual key | Engineers, workloads | IAM-001 to IAM-009, TEN-001 to TEN-006 |
-| Cost control | Per-team budgets, rate and token limits, chargeback reports | Team admins, FinOps | CST-001 to CST-011 |
+| Identity | Entra sign-in (MFA, compliant device) to the Admin UI, where each user creates their own virtual key; every API call uses a virtual key | Engineers, workloads | IAM-001 to IAM-014, TEN-001 to TEN-008 |
+| Cost control | Per-team budgets, rate and token limits, chargeback reports | Team leads, FinOps | CST-001 to CST-011 |
 | Residency and privacy | All processing and logs in Japan; no prompt content stored by default | Legal, security | RES-001 to RES-007, PRV-001 to PRV-004 |
 | Guardrails | PII masking, prompt-attack detection, run inside the VPC | Security | SEC-008, SEC-009 |
 

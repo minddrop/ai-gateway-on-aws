@@ -24,9 +24,9 @@ Fill it in using the writing conventions in ../../README.md. Delete this comment
 
 | Caller | Credential | Header | How to get it | Lifetime |
 |---|---|---|---|---|
-| Person (CLI, SDK) | Entra ID access token for [default: `api://litellm-prod/.default`] | `Authorization: Bearer <token>` | `litellm-token` helper [CMP §2.3.4] | [default: about 1 h; the tool refreshes it] |
-| Key-only tool | Personal virtual key | `x-api-key: <key>`. The EKS sample's key check reads this header [CMP §2.3.4]; [fill: whether `Authorization: Bearer` also works on the pinned version] | 05 §4 | Maximum in 04 §4.4 |
-| Workload | Virtual key issued by CI | `x-api-key: <key>` | 05 §5.2 | Maximum in 04 §4.4 |
+| Person (Claude Code, Codex CLI, IDE plugin, SDK) | Personal virtual key, charged to one of the user's teams and valid only on the model routes (02 D-26) | `x-api-key: <key>` or `Authorization: Bearer <key>`; both are tested on the pinned version (02 T-001, T-002) | Created in the Admin UI (05 §5); Claude Code and Codex CLI read it through the key helper (05 §4) | Maximum in 04 §4.4 |
+| Workload | Service-account key created by CI (02 D-27) | `x-api-key: <key>` or `Authorization: Bearer <key>` | 05 §5.2 | Maximum in 04 §4.4 |
+| Browser (Admin UI) | Entra sign-in, then a LiteLLM session cookie | Cookie set at `/sso/callback` | 05 §1 | `LITELLM_UI_SESSION_DURATION` (04 §4.2) |
 | mTLS (if adopted) | Client certificate, in addition to the above | TLS handshake | [fill: Intune / Private CA] | [fill] |
 
 ## 3. Endpoints
@@ -48,16 +48,23 @@ Fill it in using the writing conventions in ../../README.md. Delete this comment
 | Method | Path | Who may call | Reachable through the ALB? | Purpose |
 |---|---|---|---|---|
 | GET | `/health/liveliness`, `/health/readiness` | [default: load balancer, monitoring] | [fill] | Health |
-| POST | `/key/generate` | Admins and CI only [CMP V-2] | [default: yes, with a stricter WAF rule set on `/key/*` [CMP §4.8]] | Issue a virtual key |
-| GET | `/key/info`, `/user/info`, `/team/info` | [default: owner, admins] | [fill] | Inspect |
-| GET | `/spend/logs`, [fill: report endpoints] | [default: team admins for their team; FinOps] | [fill] | Usage |
-| GET | `/ui`, `/sso/*` | Admins (Entra SSO) | [default: yes, with a stricter WAF rule set [CMP §4.8]] | Admin UI |
+| POST | `/key/generate` | Users from an Admin UI session, for their own keys on their own teams; the CI identity (02 D-26, D-27). Keys that users create are refused on it. | [default: yes, on the WAF path allowlist (02 D-31), with a stricter WAF rule set on `/key/*` [CMP §4.8]] | Issue a virtual key |
+| GET | `/key/info`, `/user/info`, `/team/info` | [default: users for their own keys and user record; members of a team for that team's keys and spend, including each member's (02 R-52); platform viewers and admins] | [default: yes, on the WAF path allowlist (02 D-31)] | Inspect |
+| GET | `/spend/logs`, [fill: report endpoints] | [default: users for their own spend; platform viewers and admins. FinOps uses Athena and Quick Sight, not this API.] | [fill] | Usage |
+| GET | `/ui`, `/sso/*` | All users (Entra SSO: CA-GW-01, and CA-GW-02 for the admin and viewer groups) | [default: yes, on the WAF path allowlist (02 D-31), with a stricter WAF rule set [CMP §4.8]] | Admin UI |
+| GET | `/metrics` | The Prometheus collector, on the dedicated metrics port only (02 D-32) | No: refused at the WAF (02 D-31, D-32) | Metrics |
+| GET | `/`, `/docs`, `/redoc`, `/openapi.json`, `/routes` | Nobody | No: refused at the WAF (02 D-31); the documentation pages are also turned off (04 §4.2) | API documentation and route list |
+| POST | `/config/*`, guardrail writes, team callback writes | Nobody through the ALB: configuration is deployed from `config.yaml` (02 D-19) | No: refused at the WAF (02 D-31) | Runtime settings |
+| Any | `/scim/v2/*` | Nobody: LiteLLM SCIM is not used (02 D-30) | No: refused at the WAF (02 D-31) | User provisioning |
+| POST | `/login`, `/v2/login` | Nobody: password sign-in is off while SSO is configured (04 §4.2) | [fill: refused at the WAF if the pinned Admin UI does not need it (02 V-3)] | Password sign-in |
 
 ### 3.3 Not available
 
 | Endpoint / feature | Reason |
 |---|---|
 | [default: image generation, audio, files, batches, assistants, …] | [default: not in the catalog, or residency not checked [CMP §10.8.7]] |
+| Pass-through routes (`/bedrock/*`, `/anthropic/*`, `/openai/*`, `/azure/*`, `/vertex_ai/*`, `/gemini/*` and the other provider prefixes) | Refused at the WAF: any valid key could call them, and LiteLLM has no switch to turn them off (02 D-31, 01 FUN-006) |
+| Any path not on the WAF path allowlist | Refused at the edge (02 D-31); the list is kept with the WAF rules: [fill: location] |
 | Client-set charging fields (`user`, request tags) | [fill: ignored for chargeback, or showback only [CMP V-7]] |
 | `no-log` parameter | Ignored; every request is logged [CMP V-6] |
 
@@ -81,7 +88,7 @@ Add one block for each endpoint whose behaviour differs from upstream. Copy this
 - **Example request:**
   ```sh
   curl -sS https://llm.corp.example/v1/messages \
-    -H "Authorization: Bearer $(litellm-token)" \
+    -H "x-api-key: <your-key>" \
     -H "anthropic-version: 2023-06-01" \
     -H "content-type: application/json" \
     -d '{"model": "claude-opus", "max_tokens": 64, "messages": [{"role": "user", "content": "Say hello"}]}'
@@ -95,8 +102,8 @@ Add one block for each endpoint whose behaviour differs from upstream. Copy this
 | HTTP status | When | What the caller should do |
 |---|---|---|
 | 400 | Invalid request, unknown or unapproved model | Fix the request; check `GET /v1/models` |
-| 401 | Missing, expired or invalid token or key | Refresh the token; check the key's expiry |
-| 403 | Source IP not allowlisted, WAF block, no mTLS certificate, or model not allowed for the team | See 08 §1 |
+| 401 | Missing, unknown, expired or blocked key | Check the key's expiry; renew it in the Admin UI (05 §5) |
+| 403 | Source IP not allowlisted, WAF block, no mTLS certificate, model not allowed for the team, or a key used on a route it may not call (02 D-26) | See 08 §1 |
 | 429 | Rate or token limit reached | Retry after `Retry-After`; ask for a higher limit |
 | [fill: status code] | Budget exceeded | [default: wait for the next budget period, or request an increase (05 §5.4)] |
 | [default: 400] | Guardrail blocked the request | [default: remove the blocked content; the message says which rule] |

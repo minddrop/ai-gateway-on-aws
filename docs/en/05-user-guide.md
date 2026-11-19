@@ -1,8 +1,8 @@
 # Internal LLM gateway: User guide
 
 <!--
-Answers: how an engineer or a team admin gets access and does their job with the gateway.
-Reader: engineers and team admins. Write in their words, organised by task, not by screen.
+Answers: how an engineer or a team lead gets access and does their job with the gateway.
+Reader: engineers and team leads. Write in their words, organised by task, not by screen.
 Owns: the rules on what may be sent, roles as users see them, tool setup, user tasks, notifications. Refers to: limits, timeouts and key lifetimes (04), API details (06), problems (08), notice periods (10 §1), contact details (11 §C).
 Detail: every task in §5 follows the block template there, and a user can complete it without asking anyone. Client setup that Intune pushes says so: most users should have nothing to configure.
 Fill it in using the writing conventions in ../../README.md. Delete this comment when done.
@@ -30,9 +30,10 @@ Fill it in using the writing conventions in ../../README.md. Delete this comment
 
 | Role | Can do | Cannot do |
 |---|---|---|
-| User | Call approved models; see own usage | Create keys; change budgets |
-| Team admin | [default: see team spend; request keys for team workloads] | [default: raise own budget] |
-| Platform admin | [default: manage teams, models, keys] | [default: read prompt content (it is not stored)] |
+| User | Create, renew and delete your own keys in the Admin UI, each charged to one of your teams; call approved models with them; see your own usage and your team's spend, including each member's (02 D-26, R-52) | Create a key with no team, for another person or for a workload; use your key on management routes; change budgets (02 D-26) |
+| Team lead | As a user, plus budget alerts; request workload keys and changes to budgets, members and models through a CI pull request (02 D-27) | Change teams, budgets or keys directly: there are no team admins in LiteLLM (02 D-27) |
+| Platform viewer | [default: read-only view of every team, user, key and spend in the Admin UI (`proxy_admin_viewer`)] | [default: change anything; read prompt content (it is not stored)] |
+| Platform admin | [default: production changes through CI only; emergencies through LiteLLM break-glass (02 D-27, D-28)] | [default: hold an admin role in production as a person; read prompt content (it is not stored)] |
 
 ## 4. Set up your tools
 
@@ -40,9 +41,9 @@ Fill it in using the writing conventions in ../../README.md. Delete this comment
 |---|---|---|---|
 | Claude Code | `ANTHROPIC_BASE_URL` and `apiKeyHelper` set in managed settings pushed by Intune | [default: nothing; sign in to Windows or macOS as usual] | [CMP §2.3.4] |
 | Codex CLI | Custom provider and `auth.command` in `~/.codex/config.toml`, pushed by Intune | [default: nothing] | [CMP §2.3.4] |
-| SDKs (OpenAI / Anthropic) | Base URL from 06 §1; token from `litellm-token` | [fill: code snippet] | 06 §2 |
+| SDKs (OpenAI / Anthropic) | Base URL from 06 §1; your personal key, sent as `x-api-key` or `Authorization: Bearer` | [fill: code snippet that reads the key without writing it to a file] | 06 §2 |
 | IDE plugins that only accept a pasted key | Personal virtual key; its maximum lifetime is in 04 §4.4 | [fill: request process] | [CMP §2.3.4] |
-| Workloads and agents | Virtual key issued by admins or CI, or [fill: workload identity] | Follow §5.2 | 06 §2 |
+| Workloads and agents | Service-account key created by CI after a pull request, kept in the workload's secret store (02 D-27) | Follow §5.2 | 06 §2 |
 
 <!-- If mTLS is adopted, add per-tool certificate steps here [CMP §2.3.4]. -->
 
@@ -62,7 +63,7 @@ Each task uses this block. Copy it for a new task, and keep every field.
 ```
 
 ### 5.1 Check how much your team has spent
-- **Who:** Team admin; any user, for their own usage
+- **Who:** Any team member, team leads included; any user, for their own usage
 - **Before you start:** [fill]
 - **Steps:**
   1. [fill: open the Admin UI at … / the dashboard at …]
@@ -71,16 +72,16 @@ Each task uses this block. Copy it for a new task, and keep every field.
 - **If something goes wrong:** 08 §1
 
 ### 5.2 Request a key for a workload
-- **Who:** Team admin
+- **Who:** Team lead
 - **Before you start:** [default: the workload name, owner, team, models, expected volume and the expiry you need]
 - **Steps:**
-  1. [default: open a ticket in [fill: queue] with the details above]
-  2. [default: the platform team issues the key through CI and stores it in [fill: secret store]]
+  1. [default: open a pull request in [fill: CI repository] that adds the key's definition with the details above]
+  2. [default: after review, CI creates the service-account key and stores it in [fill: secret store] (02 D-27)]
 - **Result:** [default: the key appears in your team's secret path. It expires on the date in the ticket, and the owner is reminded before it does (§6).]
 - **If something goes wrong:** [fill]
 
 ### 5.3 Request a new model
-- **Who:** Team admin
+- **Who:** Team lead
 - **Before you start:** [default: the model, the use case and the expected volume]
 - **Steps:**
   1. [default: open a ticket in [fill: queue] with the details above]
@@ -89,7 +90,7 @@ Each task uses this block. Copy it for a new task, and keep every field.
 - **If something goes wrong:** [fill]
 
 ### 5.4 Request a budget increase
-- **Who:** [fill]
+- **Who:** [default: Team lead, through a CI pull request (02 D-27)]
 - **Before you start:** [fill]
 - **Steps:**
   1. [fill]
@@ -97,18 +98,18 @@ Each task uses this block. Copy it for a new task, and keep every field.
 - **If something goes wrong:** [fill]
 
 ### 5.5 Leave a team or the company
-- **Who:** [default: any user, and their team admin]
+- **Who:** [default: any user, and their team lead]
 - **Before you start:** [fill]
 - **Steps:**
   1. [fill]
-- **Result:** [fill: what happens to your access and keys, and when (the IAM requirements in 01 §6.2)]
+- **Result:** [default: when you leave a team's `llm-team-*` group, the sync job removes you from that team and deletes your keys for it; when your Entra account is disabled, it blocks all your keys. Both happen within the target in 01 Q-8 (02 D-30, 01 TEN-007, IAM-006). After a team change, create a new key for your new team.]
 - **If something goes wrong:** [fill]
 
 ## 6. Notifications
 
 | Notification | When | Sent to | Channel |
 |---|---|---|---|
-| Budget threshold | [default: at 80 % and 100 % of the budget] | [default: team admin] | [fill: email / chat] |
+| Budget threshold | [default: at 80 % and 100 % of the budget] | [default: team lead] | [fill: email / chat] |
 | Key expiry | [fill: number of days before] | [default: key owner] | [fill] |
 | Model retirement | The notice period in 10 §1 | [default: all users of the model] | [default: release notes and email] |
 
@@ -117,4 +118,4 @@ Each task uses this block. Copy it for a new task, and keep every field.
 - **Maximum request duration:** 04 §4.3. Longer requests are cut; see 08 §1.
 - **Rate and token limits for users and teams:** 04 §4.4.
 - [default: Prefer prompt caching where the tool supports it; it lowers cost.]
-- [default: Do not share personal keys; they are tied to you and logged.]
+- [default: Do not share your keys; they are tied to you and logged. Whether you may use your key on a server, a shared VM or a CI job is open (01 Q-18); workloads use service-account keys (§5.2).]
