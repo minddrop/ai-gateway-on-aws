@@ -55,6 +55,7 @@ The same initial cost with 12, 24 (the grand total above) and 36 months of recur
 | Rows with quantity but no amount / 単価未設定の行数 | 1 | CHECK (deliberate): the LiteLLM Enterprise licence placeholder has no price yet (01 Q-17, owner: Product owner). All other rows are priced. |
 | Rows with unit 'one-time' marked Recurring / 一式×継続の行数 | 0 | OK |
 | PM line items while PM % > 0 / PM費の二重計上 | 0 | OK |
+| Likelihood on rows outside Contingency / 予備費以外の発生確率 | 0 | OK |
 
 The workbook could not be recalculated with LibreOffice in this environment (not installed). The Summary values above were computed independently in Python with the workbook's formulas (unit cost lookup, ROUND for PM and contingency, ROUNDDOWN for tax); Excel recalculates the workbook when it is opened.
 
@@ -226,7 +227,7 @@ Subtotal = Quantity × Unit cost. **Recurring rows show the cost per month.** Pr
 | Contingency & risk buffer / 予備費 | Risk R-7 (recurring part): Osaka egress (1 Network Firewall endpoint + 1 NAT gateway + TGW attachment) | Vendor / non-labor / 外部・非人件費 | monthly fee / 月額 | 0.75 | 61,554 | 46,166 | Recurring / 継続 | 02 §14 R-7 (likelihood High = 75 %). Expected value = impact × likelihood (A7). Impact (0.395 + 0.062 + 0.07)/h × 730 h = USD 384.71/month [PL 2026-11-17] |
 | Contingency & risk buffer / 予備費 | Risk R-32: office firewall allows only fixed IPs — AWS Global Accelerator in front of the ALB | Vendor / non-labor / 外部・非人件費 | monthly fee / 月額 | 0.5 | 3,720 | 1,860 | Recurring / 継続 | 02 §14 R-32 (likelihood Medium = 50 %). Expected value = impact × likelihood (A7). Impact 0.025/h × 730 h + 500 GB in × 0.01 DT-premium = USD 23.25/month [PL Global Accelerator 2026-11-17]; build effort in the % buffer |
 | Contingency & risk buffer / 予備費 | Risk R-1: spend-log table slows key lookups — partitioning or separate store | Senior engineer / シニアエンジニア | person-months / 人月 | 0.25 | 1,100,000 | 275,000 | One-time / 初期 | 02 §14 R-1 (likelihood Low = 25 %). Expected value = impact × likelihood (A7). Impact 1.0 pm; Low at 30 engineers (≈3.3 M rows / 90 days), Medium in 02 §14 at A-9 scale |
-| Contingency & risk buffer / 予備費 | Risk R-10: Japanese classifier needs a GPU — SageMaker ml.g5.xlarge × 2 (2 AZs) in Tokyo | Vendor / non-labor / 外部・非人件費 | monthly fee / 月額 | 0.5 | 477,245 | 238,622 | Recurring / 継続 | 02 §14 R-10 (likelihood Medium = 50 %). Expected value = impact × likelihood (A7). Impact 2 × 2.043/h × 730 h = USD 2,982.78/month [PL SageMaker Tokyo 2026-11-17]; CPU guardrail tasks would shrink (not netted) |
+| Contingency & risk buffer / 予備費 | Risk R-10: Japanese classifier needs a GPU — SageMaker ml.g5.xlarge × 2 (2 AZs) in Tokyo | Vendor / non-labor / 外部・非人件費 | monthly fee / 月額 | 0.5 | 477,245 | 238,623 | Recurring / 継続 | 02 §14 R-10 (likelihood Medium = 50 %). Expected value = impact × likelihood (A7). Impact 2 × 2.043/h × 730 h = USD 2,982.78/month [PL SageMaker Tokyo 2026-11-17]; CPU guardrail tasks would shrink (not netted) |
 | Contingency & risk buffer / 予備費 | Risk R-12: per-team or per-department inference profiles with team-specific model names | Engineer / エンジニア | person-days / 人日 | 7.5 | 42,500 | 318,750 | One-time / 初期 | 02 §14 R-12 (likelihood High = 75 %). Expected value = impact × likelihood (A7). Impact 10 pd (config, CI, V-4/V-7 re-run) |
 | Contingency & risk buffer / 予備費 | Risk R-6 / 01 Q-10: per-team content logging required this phase — separate store, Macie, V-1 re-run | Senior engineer / シニアエンジニア | person-months / 人月 | 0.5 | 1,100,000 | 550,000 | One-time / 初期 | 02 §14 R-6 (likelihood Medium = 50 %). Expected value = impact × likelihood (A7). Impact 1.0 pm; whether it is needed is 01 Q-10, so Medium used instead of R-6's High |
 | Contingency & risk buffer / 予備費 | Risk R-4: Codex CLI Responses API fails with non-OpenAI models — workaround | Engineer / エンジニア | person-days / 人日 | 5.0 | 42,500 | 212,500 | One-time / 初期 | 02 §14 R-4 (likelihood Medium = 50 %). Expected value = impact × likelihood (A7). Impact 10 pd |
@@ -309,10 +310,10 @@ Unchanged from the template: units person-months / person-days / monthly fee / o
 | Item | Rule |
 |---|---|
 | Unit cost / 単価 | Override (column J) if entered, else role rate from Rates (monthly for person-months, daily for person-days) |
-| Subtotal / 小計 | Quantity × Unit cost |
+| Subtotal / 小計 | Quantity × Unit cost; on Contingency rows with a likelihood in K: Quantity × Unit cost × likelihood |
 | Development cost / 開発費 | Sum of one-time costs in phase-based categories |
 | Project management / PM費 | PM % × development cost |
-| Contingency / 予備費 | Contingency % × initial cost before contingency, + contingency % × monthly recurring cost; plus identified-risk line items |
+| Contingency / 予備費 | Contingency % × initial cost before contingency, + contingency % × monthly recurring cost; plus identified-risk line items at expected value (impact × likelihood) |
 | Total initial cost / 初期費用 | All one-time costs (phase-based + cross-cutting, incl. PM and contingency) |
 | Recurring – monthly / 継続月額 | Sum of recurring rows (+ recurring contingency) |
 | Grand total / 総額 | Initial cost + monthly recurring × 24 months |
