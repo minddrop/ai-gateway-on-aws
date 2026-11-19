@@ -4,7 +4,7 @@ Documentation for the internal LLM gateway: one OpenAI- and Anthropic-compatible
 
 The design analysis behind it is in [`../llm-gateway-comparison`](../llm-gateway-comparison/README.md) (English is authoritative), cited as `[CMP §n.n]`, `[CMP A-n]` (assumption) and `[CMP V-n]` (launch gate). Its recommendation, [CMP §7.2](../llm-gateway-comparison/docs/en/06-comparison.md#72-recommendation), is the starting point for this set. The set follows the template in [`../llm-gateway-docs-template`](../llm-gateway-docs-template/README.md).
 
-**Status: design phase.** Nothing is built yet, and this repository holds no code or IaC. 00, 01, 02 and 11 are written as Drafts for review. 03–10 are stubs that keep the template text and are written during the build phase.
+**Status: design phase.** Nothing is built yet, and this repository holds no gateway code or IaC; the only code is the cost estimate generator in [`cost/tools/`](cost/tools/). 00, 01, 02 and 11 are written as Drafts for review. 03–10 are stubs that keep the template text and are written during the build phase.
 
 | # | Document | Answers | Owner |
 |---|---|---|---|
@@ -20,6 +20,28 @@ The design analysis behind it is in [`../llm-gateway-comparison`](../llm-gateway
 | 09 | [Development guide](docs/en/09-development-guide.md) | Repo layout, workflow, LiteLLM upgrades, tests | Platform engineering |
 | 10 | [Release notes](docs/en/10-release-notes.md) | What changed and what callers must do | Platform engineering |
 | 11 | [Appendices](docs/en/11-appendices.md) | Glossary, links, contacts, approval checklist | Documentation owner |
+
+## Cost estimate
+
+[`cost/`](cost/) holds the v0.1 budget estimate for building the gateway and running it for 24 months, made from the template in [`../cost-estimate-template`](../cost-estimate-template/README.md). The workbooks are the master (English and Japanese); the markdown files are generated read-only snapshots of them.
+
+| File | What it is |
+|---|---|
+| `CostEstimate_InternalLLMGateway_v0.1.xlsx`, `…_jp.xlsx` | The estimate workbooks: the template filled with this estimate's line items, assumptions and parameters |
+| `cost_estimate_InternalLLMGateway_v0.1.md`, `…_jp.md` | Snapshots: the workbook sheets (sections 1–6) plus model usage, options, sizing detail, open items and findings (7–11) |
+| `tools/model.py` | Every price, quantity and assumption of this estimate: the single source of its numbers |
+| `tools/ja.py`, `tools/tr.py` | Japanese text for this estimate |
+| `tools/md.py` | The snapshot: the template's sections 1–6 with this estimate's notes, and sections 7–11 |
+| `tools/make.py` | Builds all four files and checks them |
+
+The generic work (filling the template, checking a filled workbook, calculating the Summary, rendering sections 1–6) is done by the scripts in the template repository's `tools/`. To regenerate the estimate after changing `model.py`, with `cost-estimate-template` cloned next to this repository (or `COST_ESTIMATE_TEMPLATE` set to its path):
+
+```sh
+pip install -r cost/tools/requirements.txt
+python cost/tools/make.py
+```
+
+`make.py` fills both workbooks, checks them against the template, recalculates their Summary and compares it with the model, and writes both snapshots. It fails if a check fails or a Japanese string is missing from `ja.py`. openpyxl does not calculate formulas, so open each workbook in Excel and check its totals before you share it.
 
 ## Who reads what
 

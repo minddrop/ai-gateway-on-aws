@@ -4,6 +4,7 @@ Single source of the numbers that go into the workbook and the markdown.
 Prices: AWS Price List API offer files for ap-northeast-1 / ap-northeast-3
 (publication 2026-11-17, checked 2026-11-17), cited as [PL].
 """
+import datetime
 import math
 
 CHECKED = "2026-11-17"
@@ -12,44 +13,24 @@ H = 730             # hours per month
 PL = f"[PL {CHECKED}]"
 
 # ---------------------------------------------------------------- template
-CAT = {
-    "req": "Requirements definition / 要件定義",
-    "des": "Basic & detailed design / 基本・詳細設計",
-    "imp": "Implementation / 実装",
-    "tst": "Testing (unit, integration, system, UAT) / テスト",
-    "mig": "Data migration / データ移行",
-    "set": "Setup, build & deployment / 構築・リリース",
-    "trn": "Training & documentation / 教育・ドキュメント",
-    "cut": "Cutover & go-live support / 本番移行・稼働支援",
-    "ops": "Operation / 運用",
-    "mnt": "Maintenance / 保守",
-    "pm":  "Project management / プロジェクト管理",
-    "qa":  "Quality assurance & reviews / 品質保証",
-    "inf": "Infrastructure / インフラ",
-    "lic": "Software licenses & tools / ライセンス・ツール",
-    "sec": "Security / セキュリティ",
-    "con": "Contingency & risk buffer / 予備費",
-}
-CAT_ORDER = list(CAT)
-PHASE = CAT_ORDER[:10]
+# Categories, roles, units and types come from the template (cost-estimate-template/tools/estimate.py).
+import template_tools  # noqa: F401,E402  (puts the template's tools/ on sys.path)
+from estimate import (CATEGORIES as CAT, CAT_ORDER, PHASE, Params, item,  # noqa: E402
+                      R_PM, R_ARCH, R_BA, R_SR, R_ENG, R_UX, R_QA, R_INF, R_SEC, R_TW, R_OPS, R_HD, R_VEN,
+                      SAMPLE_RATES, DAYS, U_PM, U_PD, U_MF, U_OT, T_OT, T_RC)
 
-R_PM, R_ARCH, R_BA, R_SR, R_ENG, R_UX, R_QA, R_INF, R_SEC, R_TW, R_OPS, R_HD, R_VEN = (
-    "Project manager / PM", "Architect / tech lead / アーキテクト", "Business analyst / SE / 業務SE",
-    "Senior engineer / シニアエンジニア", "Engineer / エンジニア", "UI/UX designer / デザイナー",
-    "QA / test engineer / テスト担当", "Infra / DevOps engineer / インフラ",
-    "Security specialist / セキュリティ", "Tech writer / trainer / ライター・講師",
-    "Operations engineer / 運用担当", "Help desk / ヘルプデスク", "Vendor / non-labor / 外部・非人件費")
-RATES = {R_PM: 1500000, R_ARCH: 1400000, R_BA: 1200000, R_SR: 1100000, R_ENG: 850000,
-         R_UX: 1000000, R_QA: 800000, R_INF: 1100000, R_SEC: 1600000, R_TW: 700000,
-         R_OPS: 750000, R_HD: 550000}
-DAYS = 20
-U_PM, U_PD, U_MF, U_OT = "person-months / 人月", "person-days / 人日", "monthly fee / 月額", "one-time / 一式"
-T_OT, T_RC = "One-time / 初期", "Recurring / 継続"
+RATES = dict(SAMPLE_RATES)   # no internal rates yet: the template's sample rates are kept (A4, open item for FinOps)
 
 # ---------------------------------------------------------------- schedule
-PROJECT = "2027-01 to 2027-07 (7 months)"
+PROJECT_PERIOD = "2027-01 to 2027-07 (7 months)"
 MONTHS_DEV, MONTHS_STG, MONTHS_PRE_GA = 6, 4, 2
 OPS_MONTHS = 24
+
+# Summary sheet: project information (English; translated for the Japanese outputs) and parameters
+PROJECT = dict(name="Internal LLM gateway on AWS (build and 24-month operation)", version="v0.1",
+               date=datetime.datetime(2026, 11, 17), prepared_by="Claude (AI assistant), for platform engineering",
+               status="Draft / 作成中")
+PARAMS = Params(pm=0.10, contingency=0.15, contingency_on_recurring=True, tax=0.10, months=OPS_MONTHS)
 
 # ---------------------------------------------------------------- prices [PL]
 P = dict(
@@ -254,7 +235,7 @@ def jpy(u):
 
 # ---------------------------------------------------------------- line items
 def row(cat, desc, role, unit, qty, typ, notes, j=None):
-    return dict(cat=CAT[cat], key=cat, desc=desc, role=role, unit=unit, qty=qty, type=typ, notes=notes, j=j)
+    return item(cat, desc, role, unit, qty, typ, notes, j)
 
 
 def labor_rows():
@@ -401,6 +382,12 @@ def infra_rows(pt, dr, dev, stg):
 
 
 LIK = {"Low": 0.25, "Medium": 0.5, "High": 0.75}
+
+
+def estimate_rows():
+    """All Estimate rows and the four environments they are priced from."""
+    envs = (prod_tokyo(), dr_osaka(), dev_env(), stg_env())
+    return labor_rows() + infra_rows(*envs) + risk_rows(), envs
 
 
 def risk_rows():
