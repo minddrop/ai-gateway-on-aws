@@ -3,13 +3,13 @@
 | Field | Value |
 |---|---|
 | Document ID | REQ-GW |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | Draft |
 | Owner | TBD (Product owner, 2026-12-18): named in Q-1 |
 | Approvers | Security, legal/privacy, network, FinOps, platform lead |
 | Related design | 02 Architecture and design |
 | Source analysis | llm-gateway-comparison commit `46699eb` (2026-11-17) |
-| Last updated | 2026-11-17 |
+| Last updated | 2026-11-20 |
 
 ## 1. Purpose and scope
 
@@ -25,7 +25,7 @@ Engineers want to use AI coding agents such as Claude Code and Codex CLI, and in
 | G-2 | No prompt, response or derived data is processed or stored outside Japan. | Resource inventory and cloud policy inspection find nothing outside Tokyo and Osaka; every catalog backend is processed in Japan (RES-001, RES-002). |
 | G-3 | No prompt or response content is stored by default. | Launch gate V-1 passes on the release that goes live (PRV-001). |
 | G-4 | Engineers use the supported coding agents through the gateway with no setup beyond storing their key once. | Pilot demonstration on an Intune-managed laptop (FUN-009). |
-| G-5 | Every control that rests on undocumented product behaviour or on our network is tested before launch and after every LiteLLM upgrade. | All launch gates V-1 to V-11 pass on the pinned version (OPS-001). |
+| G-5 | Every control that rests on undocumented product behaviour or on our network is tested before launch and after every LiteLLM upgrade. | All launch gates V-1 to V-12 pass on the pinned version (OPS-001). |
 
 ### 1.3 Non-goals (out of scope for this phase)
 
@@ -35,7 +35,7 @@ Engineers want to use AI coding agents such as Claude Code and Codex CLI, and in
 | NG-2 | External model APIs that cannot prove in-Japan processing | Not allowed until legal and security confirm in-Japan processing in writing [CMP A-7] | A provider gives a written commitment to process and store in Japan (REG-001) |
 | NG-3 | Response caching | A response cache would store full responses, keyed by request content [CMP §2.8] | A use case needs it and legal/privacy approves storing responses (PRV-001) |
 | NG-4 | Model training and fine-tuning | The gateway governs how models are consumed, not how they are built [CMP §10.1, §10.9] | n/a: belongs to a separate ML platform [CMP §10.9] |
-| NG-5 | Private-line ingress (Route A over Direct Connect) | It adds isolation, not identity or device protection, and adds carrier and DNS dependencies [CMP §2.6, §8.0] | A trigger in [CMP §8.0] applies, for example the office proxy cannot exempt the gateway from TLS inspection |
+| NG-5 | Private ingress: Route A over Direct Connect, or a site-to-site IPsec VPN to the gateway VPC | A private path adds isolation, not identity or device protection [CMP §8.5], and adds carrier, routing and DNS dependencies [CMP §2.6, §8.0]; a VPN tunnel is the same kind of path (02 D-6) | A trigger in [CMP §8.0] applies, for example the office proxy cannot exempt the gateway from TLS inspection |
 | NG-6 | mTLS with Intune device certificates | Not needed while unmanaged devices cannot use our egress IPs [CMP §2.3.2, A-16] | Gate V-11 fails, A-16 cannot be confirmed, or NG-1 is revisited (SEC-003) |
 | NG-7 | Endpoint families other than those in FUN-001 to FUN-004: images, audio, batch, files, fine-tuning, vector stores, MCP gateway, A2A, pass-through routes | Each is a new data path that must pass the residency checklist first [CMP §10.8.7] | A team requests one and it passes [CMP §10.8.7]; MCP and embeddings are the likely first additions [CMP §10.9] (Q-5) |
 | NG-8 | Keeping identity data (Entra ID, Okta, Intune) in Japan | The SaaS identity plane never processes prompts and is outside the residency scope [CMP A-11] | Legal requires identity data in Japan; that is a tenant-location question this system cannot solve [CMP A-11] |
@@ -46,7 +46,7 @@ The pilot teams and the target dates are Q-3.
 
 | Phase | Scope | Target date | Exit criteria |
 |---|---|---|---|
-| Pilot | Pilot teams TBD (Product owner, 2026-12-18) on the corporate network; Claude Code, Codex CLI, SDKs and IDE plugins; Bedrock models processed in Japan from the catalog (§6.5); Route B ingress | TBD (Product owner, 2026-12-18) | Every launch gate V-1 to V-11 passed before the first pilot user is admitted [CMP §2.10]; every Must requirement Verified |
+| Pilot | Pilot teams TBD (Product owner, 2026-12-18) on the corporate network; Claude Code, Codex CLI, SDKs and IDE plugins; Bedrock models processed in Japan from the catalog (§6.5); Route B ingress | TBD (Product owner, 2026-12-18) | Every launch gate V-1 to V-12 passed before the first pilot user is admitted [CMP §2.10]; every Must requirement Verified |
 | General availability | All engineers on the corporate network, and workloads in the on-premises DC and in the cloud [CMP A-4, A-13] | TBD (Product owner, 2026-12-18) | Pilot findings recorded in 08; a DR drill met AVL-M02 and AVL-M03; gates re-run on the release that goes live |
 
 ## 2. Stakeholders and users
@@ -57,7 +57,7 @@ Team names for each role are in 00 §1.3.
 |---|---|---|---|
 | Engineer (interactive) | Uses Claude Code, Codex CLI, IDE plugins | Japan-processed frontier models in their usual tools; set up once, with no sign-in per request | Product owner |
 | Workload / agent | On-prem DC or cloud service calling the API | A team-scoped service-account key with its own budget and model list; a dedicated egress IP or private path [CMP §2.3.5] | Product owner |
-| Team admin | Manages a team's spend and its workload keys [CMP §2.3.5] | See team spend against budget; create team and service-account keys; budget alerts | Product owner |
+| Team lead | Leads a team that is charged for usage; an ordinary team member in the gateway, with no admin role (02 D-27) | See team spend against budget; budget alerts; workload keys, budgets, members and models changed through a CI pull request | Product owner |
 | Platform operator | Builds, deploys and runs the gateway | IaC deploys, runbooks that match tested behaviour, alerts, SSO admin access with phishing-resistant MFA [CMP §2.9] | Platform engineering |
 | FinOps | Charges usage back to teams | Per-team shares from the gateway applied to the AWS bill, with the residual on its own line [CMP §4.5] | FinOps |
 | Security / SOC | Watches for misuse and incidents | Audit events and request metadata in the SIEM, guardrail results, no content in logs [CMP §2.8] | Security / SOC |
@@ -72,12 +72,16 @@ Team names for each role are in 00 §1.3.
 |---|---|---|---|
 | UC-1 | Engineer | Runs Claude Code or Codex CLI from the office against a model processed in Japan; usage is charged to their team. | FUN-001, FUN-002, FUN-009, IAM-002, CST-001, RES-002, SEC-001 |
 | UC-2 | Workload in the on-prem DC | Calls the chat completions API with its team's service-account key from a dedicated DC egress IP; spend is charged to the team. | FUN-003, IAM-002, TEN-002, TEN-003, SEC-002, CST-001 |
-| UC-3 | Team admin | Checks team spend against the budget, and is notified as the budget is used up. | CST-002, CST-010, OBS-003 |
+| UC-3 | Team lead | Checks team spend against the budget, and is notified as the budget is used up. | CST-002, CST-010, OBS-003 |
 | UC-4 | Leaver | Access ends when the account is disabled in Entra: personal keys stop working. | IAM-006 |
 | UC-5 | Engineer | Signs in to the Admin UI with Entra (MFA, compliant device) and creates or renews a personal key within the upper bounds. | FUN-008, IAM-001, TEN-001, TEN-005, TEN-006 |
 | UC-6 | FinOps | Produces the monthly chargeback from the AWS bill and the gateway's per-team shares, with the residual on its own line. | CST-007, CST-008, CST-011 |
 | UC-7 | Platform operator | Fails the gateway over to Osaka when Tokyo is lost. | AVL-001, AVL-M02, AVL-M03, OPS-007 |
-| UC-8 | Team admin | Asks for a new model; it is added only after its processing locations are checked. | MDL-104, REG-001 |
+| UC-8 | Team lead | Asks for a new model; it is added only after its processing locations are checked. | MDL-104, REG-001 |
+| UC-9 | Engineer | Moves to another team: the user's keys for the old team stop working, and new keys are charged to the new team. | TEN-004, TEN-007, CST-001 |
+| UC-10 | Team lead | Asks for a service-account key, a budget change or a member change through a pull request that the CI pipeline applies. | TEN-002, OPS-003 |
+| UC-11 | Security / SOC | Investigates how a key was used, with read-only access to keys, users and spend, and no way to change them. | IAM-010, IAM-013, OBS-001, OBS-002 |
+| UC-12 | Platform operator | Makes an emergency change with break-glass access to the gateway application when SSO or CI is unavailable; Security is alerted. | IAM-012 |
 
 ## 3. Assumptions and dependencies
 
@@ -106,6 +110,7 @@ IDs AS-1 to AS-16 restate the comparison's assumptions A-1 to A-16 in one line e
 | AS-19 | A SIEM is available whose storage is in Japan. | [CMP §4.7] | Security / SOC | 2026-12-18 | Open | OBS-001 and OBS-004 cannot be met without breaking RES-004. |
 | AS-20 | Intune can deploy managed settings for Claude Code, a user-level `config.toml` for Codex CLI, and the key helper, to Windows and macOS. | [CMP §2.3.4] | Endpoint / Intune | 2026-12-18 | Open | FUN-009 is not met; users configure tools by hand. |
 | AS-21 | Every user is enrolled in Okta Verify before first sign-in, because EAM does not support inline enrolment. | [CMP §2.1] | Identity | 2026-12-18 | Open | First sign-ins fail; an enrolment step is added to onboarding. |
+| AS-22 | Admins and operators can register an Entra-native phishing-resistant method (passkey or FIDO2 security key, Windows Hello for Business, or certificate-based authentication) on their managed devices. | 02 D-29 | Identity | 2026-12-18 | Open | IAM-003 and IAM-007 cannot be met: MFA through Okta (External MFA) cannot satisfy a phishing-resistant authentication strength (02 R-56). |
 
 ## 4. Constraints
 
@@ -113,7 +118,7 @@ IDs AS-1 to AS-16 restate the comparison's assumptions A-1 to A-16 in one line e
 |---|---|---|
 | CON-1 | The hosting cloud is AWS; primary Tokyo (`ap-northeast-1`), DR Osaka (`ap-northeast-3`). | [CMP §7.2] |
 | CON-2 | The gateway software is LiteLLM Proxy, with an Enterprise licence. | [CMP §0, §7.2, A-6] |
-| CON-3 | Entra ID is the only identity provider for the gateway; Okta Verify supplies MFA through Entra; Intune supplies device compliance. | [CMP A-1, A-2, A-3, §2.1] |
+| CON-3 | Entra ID is the only identity provider for the gateway; Okta Verify supplies MFA through Entra External MFA, except where Entra must require a phishing-resistant method for admins and operators (02 D-29); Intune supplies device compliance. | [CMP A-1, A-2, A-3, §2.1]; 02 D-29 |
 | CON-4 | Every gateway component, data store, backup, log, export and data pipeline is in Tokyo or Osaka. | [CMP A-5, §2.5] |
 | CON-5 | Model deployments are allowed only where processing, not just the endpoint, is in Japan. | [CMP §2.5] |
 | CON-6 | Public model provider APIs are blocked by default. | [CMP A-7] |
@@ -179,23 +184,30 @@ Avoid words that cannot be tested: *fast, secure, user-friendly, as appropriate,
 | IAM-001 | The gateway's web UI shall accept sign-in only through Entra ID, with MFA through Okta Verify and a compliant device required at sign-in. | Device and MFA are checked when keys are issued [CMP §2.1 CA-GW-01, §2.3.1] | Must | Sign-in succeeds from a compliant device with MFA; it is refused from a non-compliant device, and without completed MFA. | T | Proposed |
 | IAM-002 | If an API request has no virtual key, or its key does not exist, has expired or is blocked, then the gateway shall refuse it with HTTP 401 before any model is called. | Every API client uses a virtual key [CMP §2.3, §2.3.1] | Must | Requests with no key, an unknown key, an expired key and a blocked key each get 401, and no model call is recorded. | T | Proposed |
 | IAM-003 | Users with an admin role shall sign in with a compliant device and phishing-resistant MFA where available, and shall sign in again at least every 8 hours. | Admin sessions are the highest-value credential [CMP §2.1 CA-GW-02, §2.9] | Must | An admin sign-in with push-only MFA where a phishing-resistant method is available is refused; an admin session older than 8 hours requires a new sign-in. | T | Proposed |
-| IAM-004 | The gateway shall take each user's role from their Entra app role assignment, and shall grant no admin permission to a user who has no admin app role. | Roles come from Entra app roles [CMP §2.3, §4.4] | Must | A user with only the user app role cannot reach any admin function; adding the admin app role grants it at next sign-in. | T | Proposed |
+| IAM-004 | The gateway shall take each user's role from their Entra app role assignment, shall grant no admin permission to a user who has no admin app role, and shall revoke an admin role within TBD (Security, 2026-12-18) (Q-8) of its removal in Entra. | Roles come from Entra app roles [CMP §2.3, §4.4]; LiteLLM keeps a stored role when the token carries none (02 R-54) | Must | A user with only the user app role cannot reach any admin function; adding the admin app role grants it at next sign-in; removing it revokes it within the target time. | T | Proposed |
 | IAM-005 | Device-code flow and legacy authentication shall be blocked for the gateway's Entra app and for the AWS operator app. | Device-code flow lets credentials land on another machine [CMP §2.1 CA-GW-04, CA-GW-05, §2.9] | Must | A device-code sign-in to each app is refused. | T | Proposed |
 | IAM-006 | When a user's Entra account is disabled, the gateway shall block all of that user's keys within TBD (Security, 2026-12-18) (Q-8). | Keys outlive the Entra session [CMP §2.3.5, §2.3.6 row 6] | Must | After an account is disabled, a request with each of the user's keys gets 401 within the target time. | T | Proposed |
 | IAM-007 | Operator sign-in to the AWS console and CLI shall require phishing-resistant MFA, a compliant device, and an office or DC egress IP. | Operator access has no gateway in front of it [CMP §2.1 CA-GW-05, §2.9 A2, A3] | Must | An operator sign-in from a non-compliant device, from a non-office IP, and with push-only MFA where a phishing-resistant method is available, are each refused. | T | Proposed |
 | IAM-008 | Admin sessions in the AWS accounts shall last at most 1 hour, and AWS API calls made with operator credentials from outside the office and DC egress IPs shall be denied. | Cached CLI credentials can be copied [CMP §2.9, §4.4] | Must | An admin session expires after 1 hour; a CLI call with copied operator credentials from a non-office IP is denied. | T | Proposed |
 | IAM-009 | Break-glass access to the AWS accounts shall exist, with credentials kept in a vault, and every use shall raise an alert to Security. | Operators need a path when SSO fails [CMP §4.4] | Should | A break-glass sign-in in a drill raises an alert in the SIEM. | D | Proposed |
+| IAM-010 | A user without an admin role shall be able to read only their own user record, keys and spend, and the members, keys and spend of the teams they belong to. | Per-user metadata is personal data [CMP §2.8]; what team members may see is set by the privacy agreement (PRV-003, 02 R-52) | Must | Launch gate V-12 passes: reads of another user's record, keys and spend, of another team, and of proxy-wide spend and metrics are refused. | T | Proposed |
+| IAM-011 | A web UI session shall end no later than 8 hours after sign-in, for every role. | The session holds a credential that also works on the API until it expires, and Entra sign-in frequency does not end it (02 D-28, R-53) | Should | A session older than the limit is refused in the UI and on the API. | T | Proposed |
+| IAM-012 | Break-glass admin access to the gateway application shall exist that does not depend on Entra ID, and every read of its credential shall raise an alert to Security. | Admins need a path when SSO or CI fails; IAM-009 covers only the AWS accounts (02 D-28) | Should | In a drill, reading the credential raises an alert in the SIEM, and an admin call made with it succeeds from an allowlisted IP. | D | Proposed |
+| IAM-013 | In production, people shall hold only read-only admin roles in the gateway application; keys of other users, teams, budgets, models and settings shall be changed only by the CI pipeline or through break-glass. | An admin can change logging, guardrails and routing at runtime (02 R-55); production changes go through CI [CMP §2.9] (02 D-27) | Should | An inspection finds no person with a write admin role in production, and a month of audit logs shows no change outside the CI identity and recorded break-glass uses. | I | Proposed |
+| IAM-014 | Dashboards and reports built from gateway data shall accept sign-in only through Entra ID, with MFA and a compliant device. | They hold per-user metadata (PRV-003) | Should | Sign-in to each dashboard and report tool from a non-compliant device, and without MFA, is refused. | T | Proposed |
 
 ### 6.3 Tenancy (TEN)
 
 | ID | Requirement | Rationale / source | Priority | Acceptance criteria | Verif. | Status |
 |---|---|---|---|---|---|---|
-| TEN-001 | A user without an admin role shall be able to create keys only for themselves, only within the upper bounds for duration, budget and TPM/RPM, and never with admin permissions. | Self-service is safe only within limits [CMP §2.3.5, V-2] | Must | Launch gate V-2 passes. | T | Proposed |
-| TEN-002 | Team keys and service-account keys shall be created only by the team's admins or the CI pipeline. | Workload keys must not be created by individuals [CMP §2.3.5] | Must | A user without the team admin role is refused when creating a team or service-account key through the UI and through the API. | T | Proposed |
+| TEN-001 | A user without an admin role shall be able to create keys only for themselves, only charged to a team they belong to, only within the upper bounds for duration, budget and TPM/RPM, and only for the model API routes; such keys shall carry no admin or management permission. | Self-service is safe only within limits [CMP §2.3.5, V-2]; a key that can manage keys lets a stolen key create new ones (02 R-51) | Must | Launch gates V-2 and V-12 pass. | T | Proposed |
+| TEN-002 | Service-account keys, and keys owned by any user other than the caller, shall be created only by the CI pipeline. | Workload keys must not be created by individuals [CMP §2.3.5]; production changes go through CI [CMP §2.9] (02 D-27) | Must | A user, whatever their team role, is refused when creating a service-account key or a key for another user, through the UI and through the API. | T | Proposed |
 | TEN-003 | Every key shall have an owner, an expiry, an explicit model list, a budget and TPM/RPM limits. | Every key must be attributable and bounded [CMP §2.3, §2.3.5] | Must | An inspection of all keys finds none without each field; creating a key without one of them is refused or filled from the upper bounds. | I, T | Proposed |
-| TEN-004 | Each team shall correspond to one Entra security group, and a user's team membership shall follow that group at each sign-in. | Entra is the source of truth for teams [CMP §2.4, §4.4] | Must | Adding a user to a team group makes them a team member at next sign-in; removing them removes the membership. | T | Proposed |
+| TEN-004 | Each team shall correspond to one Entra security group; a user shall become a team member at their next sign-in after joining the group, and shall stop being a member within TBD (Security, 2026-12-18) (Q-8) of leaving it. | Entra is the source of truth for teams [CMP §2.4, §4.4]; LiteLLM adds memberships at sign-in but never removes them (02 R-54) | Must | Adding a user to a team group makes them a team member at next sign-in; removing them removes the membership within the target time. | T | Proposed |
 | TEN-005 | User-level budget and TPM/RPM limits shall apply across all of a user's keys together. | Extra keys must not multiply the allowance [CMP §2.3.5] | Must | Launch gate V-2 passes, including its two-key check. | T | Proposed |
 | TEN-006 | Personal and service-account keys shall expire no more than 90 days after they are created. | Bounded key lifetime [CMP §2.3, §2.3.5] | Must | Creating a key with a longer expiry is refused; an inspection finds no key with a longer lifetime. | T | Proposed |
+| TEN-007 | When a user stops being a member of a team, every key that the user owns and that is charged to that team shall stop working within TBD (Security, 2026-12-18) (Q-8). | A user who moves team must not keep the old team's models or charge the old team (02 §4.5) | Must | After a user is removed from a team group, a request with their key for that team gets 401 within the target time. | T | Proposed |
+| TEN-008 | If a user belongs to no team, then the gateway shall refuse to create a key for them. | Every call is charged to one team (G-1, CST-001) | Must | A user in no `llm-team-*` group is refused when creating a key in the UI and through the API. | T | Proposed |
 
 ### 6.4 Cost allocation and limits (CST)
 
@@ -210,7 +222,7 @@ Avoid words that cannot be tested: *fast, secure, user-friendly, as appropriate,
 | CST-007 | Each month, each team's charge shall equal the AWS bill total for the model service multiplied by the team's share of recorded cost, and the difference between the bill and total recorded cost shall be reported as its own line. | The bill is the cost truth, the gateway gives the shares [CMP §4.5, §7.2] | Must | A month's chargeback report reproduces from the bill and the spend export, and shows the residual line. | A | Proposed |
 | CST-008 | When the monthly residual exceeds a threshold, it shall be investigated and the cause recorded. | The residual contains pricing errors and unmetered requests [CMP §4.5] | Should | A residual above the threshold (Q-12) has an investigation record in the following month. | I | Proposed |
 | CST-009 | The budget policy signed off by finance shall state the maximum overshoot of a budget, derived from the concurrency and request-size limits. | Parallel requests started under budget can overshoot it [CMP §2.4] | Should | The signed policy states the bound and the calculation behind it. | A | Proposed |
-| CST-010 | When a team's spend reaches 80 % and 100 % of its budget, the team's admins shall be notified, with no prompt content in the notification. | Same thresholds as the AWS Budgets backstop [CMP §4.5]; alerts carry no content [CMP §2.5] | Should | Crossing each threshold in a test sends one notification to the team admin, and its text contains no prompt content. | T | Proposed |
+| CST-010 | When a team's spend reaches 80 % and 100 % of its budget, the team's leads shall be notified, with no prompt content in the notification. | Same thresholds as the AWS Budgets backstop [CMP §4.5]; alerts carry no content [CMP §2.5] | Should | Crossing each threshold in a test sends one notification to the team lead, and its text contains no prompt content. | T | Proposed |
 | CST-011 | Every team shall be mapped to one department or cost centre for chargeback. | Department chargeback [CMP §2.4, §4.5] | Must | An inspection finds no team without a department; the monthly report totals by department. | I | Proposed |
 
 ### 6.5 Model catalog and routing (MDL)
@@ -276,7 +288,7 @@ Availability is from the comparison's snapshot (checked 2026-10-30) and is re-ch
 | SEC-008 | The gateway shall check every request, before the model call and processed in Japan, for personal information to mask and for prompt attacks, in Japanese and in English. | Bedrock Guardrails cannot do this in Japan for Japanese [CMP §2.5, §4.8] | Must | For a test set in Japanese and English, every listed personal-information type is masked before the model call and the prompt-attack detection rate meets the target; the list and target are Q-13. | T | Proposed |
 | SEC-009 | The behaviour of the gateway when the guardrail check fails (refuse or allow the request) shall be defined and approved by Security. | The comparison does not set it (R-11) | Should | The approved behaviour is recorded, and a test with the guardrail service stopped shows it. | I, T | Proposed |
 | SEC-010 | The gateway's master key shall be held only in the secrets store, used by no person for routine work, rotated on a schedule and when an admin leaves, and everyone who can read it shall be reviewed as an admin. | It is a static admin credential [CMP §2.3.5] | Must | An inspection shows the secret's readers listed in the admin access review, and a rotation record within the schedule. | I | Proposed |
-| SEC-011 | Password login with the master key on the web UI shall be turned off, or its residual risk accepted in writing. | It is accepted from every allowlisted IP [CMP §2.3.5, V-3] | Must | Launch gate V-3 passes. | T | Proposed |
+| SEC-011 | While SSO is configured, password sign-in to the web UI (with the master key, a configured username and password, or a database user's password) shall be turned off, or its residual risk accepted in writing. | Each is accepted from every allowlisted IP and skips Entra [CMP §2.3.5, V-3] (02 R-2) | Must | Launch gate V-3 passes for each kind of password sign-in. | T | Proposed |
 | SEC-012 | Secrets shall not be stored in configuration files, images or the repository; the database credential shall rotate automatically; and the salt key shall never change without an approved re-encryption plan. | [CMP §4.8] | Must | Secret scanning of the repository and images finds none; the database secret shows automatic rotation. | I | Proposed |
 | SEC-013 | The gateway's outbound traffic shall be limited to an allowlist of hostnames, with no model provider hostname on it, and all other traffic denied and logged. | [CMP §4.6, A-7] | Must | From a gateway task, a connection to an unlisted host is denied and appears in the firewall log. | T | Proposed |
 | SEC-014 | The gateway shall reach model backends only over private endpoints or the private path inside Japan. | [CMP §4.3, §7.2] | Must | With the gateway's internet egress blocked for model hostnames, every catalog model still works. | T | Proposed |
@@ -285,6 +297,7 @@ Availability is from the comparison's snapshot (checked 2026-10-30) and is re-ch
 | SEC-017 | No interactive shell access to running gateway containers shall be possible in production. | [CMP §4.4] | Should | An attempt to open a shell in a production container is refused. | T | Proposed |
 | SEC-018 | Repositories shall be scanned for the virtual key format, with pushes that contain a key blocked. | Leaked keys are the commonest leak [CMP §2.3.6 row 1] | Should | A push containing a test key is rejected. | T | Proposed |
 | SEC-019 | The gateway's AWS accounts shall run continuous threat detection and configuration compliance checks, with findings sent to the SIEM. | [CMP §4.8] | Should | A sample finding appears in the SIEM. | D | Proposed |
+| SEC-020 | The load balancer shall forward only requests for an approved list of paths, and shall refuse every other path before it reaches the gateway application. | LiteLLM serves alias, pass-through, metrics, documentation and configuration routes that any key may reach (02 D-31) | Must | Requests to paths outside the list, including the metrics, API documentation, route list, configuration, SCIM and pass-through paths, are refused at the edge. | T | Proposed |
 
 ### 7.4 Availability and DR (AVL)
 
@@ -328,6 +341,8 @@ Availability is from the comparison's snapshot (checked 2026-10-30) and is re-ch
 | OBS-005 | When one key is used from several source IPs or user agents, an alert shall be raised. | Detects key sharing [CMP §2.3.3, §8.8] | Should | Using one test key from two user agents raises the alert. | T | Proposed |
 | OBS-006 | An alert shall be raised when the database, the counter store, Entra ID, the licence endpoint or the guardrail service fails, and when requests complete without a spend record. | Each is a known failure mode [CMP §2.4, §2.10] | Must | Each failure, caused in staging, raises its alert. | T | Proposed |
 | OBS-007 | Every operator and break-glass action in the gateway's AWS accounts shall be recorded in an audit trail delivered to the SIEM, and reviewed on a schedule. | Operator access is the most powerful path [CMP §2.9] | Must | A sample console action appears in the SIEM; the review schedule is recorded (TBD (Security, 2026-12-18)). | T, I | Proposed |
+| OBS-008 | When a service-account key is used from a source IP other than the egress IP registered for its workload, an alert shall be raised. | The gateway cannot bind a key to a source IP (02 §4.1) | Should | Using a test service-account key from an office IP raises the alert. | T | Proposed |
+| OBS-009 | Every database session that a person opens on the gateway database, and the statements run in it, shall be recorded and delivered to the SIEM. | A direct database write bypasses the gateway's audit log (02 D-27) | Should | A query run in a person's session appears in the SIEM. | T | Proposed |
 
 ### 7.7 Operability (OPS)
 
@@ -380,18 +395,19 @@ Due dates are proposed and are confirmed in review. Design-level open items are 
 | Q-6 | What are the service levels: the availability target and what counts as down, whether upstream outages are excluded, RTO and RPO targets, the maximum planned downtime per upgrade, support hours, and the DR drill interval? | AVL-M01 to AVL-M04, OPS-006, OPS-007, 00 §1.4 | Product owner | 2026-12-18 | Open |
 | Q-7 | What are the performance targets: added latency, throughput, concurrent streams, and expected growth at 12 and 24 months? | PRF-M01, PRF-M02, PRF-M04 | Product owner | 2026-12-18 | Open |
 | Q-8 | Security timings: how soon after an Entra account is disabled must the user's keys stop working; how soon must audit events reach the SIEM; how often are audit events and operator activity reviewed? | IAM-006, OBS-001, OBS-007, 02 §4.3, 02 §7.4 | Security / SOC | 2026-12-18 | Open |
-| Q-9 | What is the classification of each data item in §8, the retention of the spend export, request metadata, infrastructure log archive and billing export, and who may read per-user metadata? | §8, PRV-003, REG-003 | Legal / privacy | 2026-12-18 | Open |
+| Q-9 | What is the classification of each data item in §8, the retention of the spend export, request metadata, infrastructure log archive and billing export, and who may read per-user metadata, including whether team members may see each other's spend, which LiteLLM shows to every member of a team (02 R-52)? | §8, PRV-003, REG-003, IAM-010 | Legal / privacy | 2026-12-18 | Open |
 | Q-10 | Is per-team content logging needed in this phase? If so, how does a team opt in, who approves it, and what retention applies? The comparison leaves the mechanism open [CMP §2.8]. | PRV-002 | Legal / privacy | 2026-12-18 | Open |
 | Q-11 | Does legal confirm the residency scope in A-11 and the abuse-monitoring position in A-12? | AS-11, AS-12, REG-002 | Legal / privacy | 2026-12-18 | Open |
 | Q-12 | Chargeback rules: which team pays when a key's owner is in two teams; whether client-set `user` and tags are showback only; the V-4 price tolerance; the residual investigation threshold; how fixed platform costs are allocated; how teams map to departments; whether a rolling 30-day budget is acceptable against calendar-month chargeback; and the overshoot bound in the budget policy. | CST-001, CST-004, CST-008, CST-009, CST-011 | FinOps | 2026-12-18 | Open |
 | Q-13 | Guardrails: which personal-information types are masked, what prompt-attack detection rate is required, and should a guardrail failure refuse or allow the request? | SEC-008, SEC-009 | Security / SOC | 2026-12-18 | Open |
 | Q-14 | Network: which office and DC egress CIDRs go on the allowlist and who owns each (A-14); can A-16 be confirmed; can the gateway hostname be exempted from TLS inspection and allowed by FQDN (A-15); what is the production hostname (the comparison uses `llm.corp.example`); which dedicated egress IPs will cloud-hosted agents use? | SEC-001, SEC-002, SEC-005, AS-14 to AS-16, 00 Document control | Network | 2026-12-18 | Open |
-| Q-15 | Identity: are AS-1 to AS-3 and AS-21 confirmed, is EAM generally available in our tenant, and what admin sign-in frequency within 4–8 hours is used [CMP §2.1]? | AS-1 to AS-3, AS-21, IAM-003 | Identity | 2026-12-18 | Open |
+| Q-15 | Identity: are AS-1 to AS-3, AS-21 and AS-22 confirmed; is External MFA (EAM) with Okta enabled in our tenant; which Entra phishing-resistant methods do admins and operators use, including whether synced passkeys are allowed (02 D-29); should CA-GW-02 also target the Global Administrator role, which can sign in without an app assignment; and which admin sign-in frequency and web UI session length, within 4–8 hours, are used [CMP §2.1]? | AS-1 to AS-3, AS-21, AS-22, IAM-003, IAM-007, IAM-011 | Identity | 2026-12-18 | Open |
 | Q-16 | Can Intune deploy the managed settings and the key helper for Claude Code and Codex CLI, and which client telemetry can be turned off? | AS-20, FUN-009, RES-006 | Endpoint / Intune | 2026-12-18 | Open |
 | Q-17 | Is the LiteLLM Enterprise licence bought (A-6), and does the vendor offer offline licence verification? | AS-6, AVL-004 | Product owner | 2026-12-18 | Open |
-| Q-18 | Does an internal AI use policy and an acceptable-use policy exist that forbid key sharing? Where are they published? | REG-004, 11 §B | Legal / privacy | 2026-12-18 | Open |
+| Q-18 | Does an internal AI use policy and an acceptable-use policy exist that forbid key sharing? Where are they published? Do they allow a personal key on servers, shared development VMs or CI jobs, or only on the owner's managed device (02 §4.6)? | REG-004, 11 §B | Legal / privacy | 2026-12-18 | Open |
 | Q-19 | Which compliance frameworks (for example ISO 27001, SOC 2) apply to the gateway? | 02 §8.2 | Security / SOC | 2026-12-18 | Open |
 | Q-20 | Which AWS Support plan and LiteLLM Enterprise support contract cover the gateway, which help desk gives first-line support, and which issue tracker is used? | 11 §B, 11 §C | Product owner | 2027-01-29 | Open |
+| Q-21 | May contractors and B2B guest accounts use the gateway and get keys? If so, is compliant-device trust from their home tenant accepted (cross-tenant access settings), and is their key expiry capped at the contract end date? | IAM-001, TEN-006, 02 §4.6 | Identity | 2026-12-18 | Open |
 
 ## 10. Traceability
 
@@ -407,6 +423,7 @@ The traceability matrix is kept in 02 §11.3, built from the Satisfies line and 
 | Version | Date | Author | Change | Approved by |
 |---|---|---|---|---|
 | 0.1 | 2026-11-17 | Claude (AI assistant), for platform engineering | Initial draft from the comparison at commit `46699eb` | — |
+| 0.2 | 2026-11-20 | Claude (AI assistant), for platform engineering | Authentication and authorization review: team leads replace team admins; keys are scoped to a team and the model routes (TEN-001, TEN-002, TEN-004, IAM-004 changed; TEN-007, TEN-008 added); SEC-011 covers every password sign-in; IAM-010 to IAM-014, SEC-020, OBS-008, OBS-009, UC-9 to UC-12, AS-22 and Q-21 added; CON-3, NG-5, CST-010, G-5, Q-9, Q-15 and Q-18 changed | — |
 
 ## 12. Glossary
 

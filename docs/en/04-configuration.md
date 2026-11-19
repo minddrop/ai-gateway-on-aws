@@ -54,7 +54,7 @@ Fill it in using the writing conventions in ../../README.md. Delete this comment
 
 | Secret | Used for | Who can read it | Rotation | Runbook |
 |---|---|---|---|---|
-| Master key | Admin API and UI password login | [default: platform admins only]. Everyone who can read it is in effect a proxy admin [CMP §2.3.5]. | [fill: schedule], and when an admin leaves | 07 §5 |
+| Master key | LiteLLM break-glass only: a Bearer token on the admin API from an allowlisted IP (02 D-28). UI password login is off (§4.2). | [default: platform admins only]. Everyone who can read it is in effect a proxy admin [CMP §2.3.5]. Every read raises an alert to Security (02 D-28, 01 IAM-012). | [fill: schedule], when an admin leaves, and after every break-glass use (02 D-28) | 07 §5 |
 | Salt key | Encrypting credentials in the DB | [fill] | **Never**, unless a re-encryption plan is approved | — |
 | DB credentials | Database | [fill] | [default: automatic, by Secrets Manager] | [fill] |
 | Licence key | LiteLLM Enterprise | [fill] | On renewal | [fill] |
@@ -83,8 +83,19 @@ Secrets are never committed. `.env` is git-ignored. [fill: secret-scanning tool]
 | `global_disable_no_log_param` | `litellm_settings` | `true` | Clients cannot skip tracking [CMP §2.4] | V-6 |
 | Response cache | `litellm_settings.cache` | Off | Cached responses hold content [CMP §2.8] | V-1 |
 | `allow_requests_on_db_unavailable` | `general_settings` | [fill: true or false, from the V-8 result] | Behaviour on a DB outage; the route is internet-facing [CMP V-8] | V-8 |
-| [fill: JWT auth settings for issuer, audience and team claim] | [default: `general_settings.litellm_jwtauth`] | [fill] | Accept only our tenant's tokens for this gateway, and map each one to the right team [CMP §2.3] | V-2, V-7 |
-| [default: `key_generation_settings`] | [default: `litellm_settings`] | [default: personal keys by `proxy_admin` only; team keys by team admins] | Users must not create keys that skip Conditional Access [CMP §2.3.5] | V-2 |
+| `key_generation_settings.personal_key_generation.allowed_user_roles` | `litellm_settings` | `["proxy_admin"]` | Users cannot create a key with no team, which no team would pay for (02 D-26, 01 TEN-008) | V-2, V-12, T-080 |
+| `default_team_params.team_member_permissions` | [fill: section, checked on the pinned version] | `["/key/generate"]` only. Not `/key/update`, which lets a member edit any key in the team. | Team members create their own keys for the team and nothing else; there are no team admins (02 D-26, D-27) | V-2, V-12 |
+| `custom_key_policy` | [fill: section, checked on the pinned version] | [fill: module path] of a hook that rejects every key a non-admin creates or regenerates unless it is `key_type: llm_api`. Needs v1.103.0 or later. | A stolen user key cannot create or change keys, because it works only on the model routes (02 D-26, R-51) | V-12 |
+| `upperbound_key_generate_params` | `litellm_settings` | `duration` at most 90 days; budget and TPM/RPM bounds in §4.4 | Enforced on key generate, update, bulk update and regenerate, for every role (01 TEN-006) | V-2, T-019 |
+| `LITELLM_UI_SESSION_DURATION` | Environment variable | [fill: at most `8h`, for every role; value from 01 Q-15]. The default is `24h`. | The session cookie wraps a LiteLLM key that works until the session ends; Entra sign-in frequency cannot end it (02 D-28, 01 IAM-003, IAM-011) | T-012, T-076 |
+| `disable_password_login_when_sso_enabled` | `general_settings` | `true` (v1.101.0 or later) | Rejects every username and password sign-in on the Admin UI once SSO is configured: `UI_USERNAME`/`UI_PASSWORD`, the master key as a password, and database users (02 D-28, 01 SEC-011, R-2) | V-3 |
+| `MICROSOFT_TENANT` | Environment variable | Our Entra tenant ID (a GUID), never `common` | LiteLLM does not check the token's tenant; the tenant in the sign-in URLs is the only restriction (02 D-28) | [fill: test that a sign-in from another tenant is refused] |
+| `MICROSOFT_SERVICE_PRINCIPAL_ID` | Environment variable | [fill: object ID of the `litellm-prod` enterprise app's service principal] | Only groups assigned to the app become LiteLLM teams (02 §4.2, 01 TEN-004) | T-020 |
+| `store_audit_logs` | `litellm_settings` | `true` (needs the Enterprise licence; silently off without it) | Key, user, team and model changes are recorded; v1.95.0 does not record guardrail changes (02 R-55, 01 OBS-001) | T-062 |
+| `prometheus_metrics_config` (`include_labels` per metric) | `litellm_settings` | No metric carries `user_email`, `client_ip` or `user_agent` | Metrics need the team and key, not the person (02 D-32, 01 OBS-003, PRV-003) | T-064 |
+| `PROMETHEUS_METRICS_PORT` | Environment variable | [fill: port] (v1.101.0 or later); its security group admits only the Prometheus collector | The dedicated metrics port has no key check (02 D-32) | V-12, T-081 |
+| `NO_DOCS`, `NO_REDOC`, `NO_OPENAPI` | Environment variables | `true` | Swagger at `/`, `/redoc` and `/openapi.json` describe every route; `/routes` stays public, so the WAF refuses it too (02 D-31) | T-081 |
+| `store_model_in_db` (`STORE_MODEL_IN_DB`) | `general_settings` or environment variable | `false` in production, with `/config/*` refused at the WAF | `/config/update` applies general settings at runtime whatever this value is, including prompt storage and pass-through routes (02 D-19, D-31, R-55) | T-081, V-1 |
 
 ### 4.3 Timeouts
 

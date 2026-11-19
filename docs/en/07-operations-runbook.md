@@ -28,7 +28,7 @@ Fill it in using the writing conventions in ../../README.md. Delete this comment
 - [ ] Change ticket raised in [fill: change system] and linked in the pipeline run.
 
 **After deploying:**
-- Run: `[fill: smoke test command]` (JWT call, virtual-key call, streaming call)
+- Run: `[fill: smoke test command]` (virtual-key call on each API style, streaming call)
 - Expect: all checks pass, and [fill: dashboard link] shows no rise in errors or latency for 15 minutes.
 
 ## 2. Rollback
@@ -109,7 +109,7 @@ The trigger, the decision owner and the known differences in Osaka (models, quot
 |---|---|---|---|
 | LiteLLM upgrade, including launch gates | [default: monthly, and on a security advisory] | 09 §3.1, 02 §11.2 | [fill] |
 | Japan model availability re-check | Quarterly and before onboarding [CMP §7.2] | [fill] | [fill] |
-| Master key rotation | [fill: schedule], and when an admin leaves | New value, then restart every task [CMP §2.3.5] | [fill] |
+| Master key rotation | [fill: schedule], when an admin leaves, and after every LiteLLM break-glass use (02 D-28) | New value, then restart every task [CMP §2.3.5] | [fill] |
 | Virtual key expiry review | [default: monthly] | [fill] | [fill] |
 | Monthly reconciliation of LiteLLM spend with CUR | Monthly | [default: Athena query; report the residual [CMP §7.2]] | FinOps |
 | Egress IP allowlist review | [default: quarterly, and on any network change] | Update the allowlist **before** the IPs change [CMP A-14] | [fill] |
@@ -161,7 +161,7 @@ One entry per alert in §3. Each entry uses this block; copy it for a new alert,
 - **Follow-up:** [fill]
 
 ### 6.4 Database or Redis unavailable
-- **What it means:** [fill: what fails for JWT and key callers, and for how long, as measured by V-8]
+- **What it means:** [fill: what fails for key callers and Admin UI sessions, and for how long, as measured by V-8]
 - **Impact:** [fill]
 - **Prompt content involved?** No
 - **Diagnose:** [fill]
