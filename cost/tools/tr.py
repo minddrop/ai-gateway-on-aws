@@ -1,33 +1,16 @@
-"""Japanese text for workbook line items (same dictionary as the markdown)."""
-import re
-
+"""Japanese text for the Estimate rows, used by both the Japanese workbook and
+the Japanese markdown. T is a snapshot.Translator holding ja.JA."""
 import model as M
-from ja import JA, RX, calc
-
-MISSING = []
+from ja import calc
 
 
-def T(s):
-    if not s:
-        return s
-    if s in JA:
-        return JA[s]
-    r = RX(s, T)
-    if r is not None:
-        return r
-    if not re.search(r"\b[a-z]{3,}\b", s):
-        return s
-    MISSING.append(s)
-    return s
-
-
-def desc(r):
+def desc(r, T):
     if r.get("comp"):
         return ("本番（東京）：" if r["env"] == "pt" else "DR（大阪）：") + T(r["comp"]["name"])
     return T(r["desc"])
 
 
-def notes(r, PT, DR, DEV, STG):
+def notes(r, T, PT, DR, DEV, STG):
     if r.get("comp"):
         c = r["comp"]
         reg = " (ap-northeast-3)" if r["env"] == "dr" else ""
@@ -47,3 +30,8 @@ def notes(r, PT, DR, DEV, STG):
     if d.startswith("Staging environment after GA"):
         return f"月額。プロジェクト期間の行と同じサイジング：{M.usd(M.tot(STG))}。更新ごとのゲート再実行に必要（OPS-001）。更新の合間の縮退は見込まない（指摘F-6）。{M.PL}"
     return T(r["notes"])
+
+
+def translate(rows, T, envs):
+    """Copies of the rows with Japanese description and notes."""
+    return [dict(r, desc=desc(r, T), notes=notes(r, T, *envs)) for r in rows]

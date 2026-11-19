@@ -1,4 +1,7 @@
-"""Japanese strings for md.py (jp). Keys are the exact English strings."""
+"""Japanese text for this estimate (md.py and tr.py, jp). Keys are the exact English strings.
+
+Generic labels of sections 1-6 are translated by the template's snapshot.py.
+"""
 import re
 
 LIK = {"Low": "低", "Medium": "中", "High": "高"}
@@ -25,81 +28,32 @@ def RX(s, T):
 
 JA = {
     # ---- Summary
-    "Project name / 案件名": "案件名",
     "Internal LLM gateway on AWS (build and 24-month operation)": "社内LLMゲートウェイ（AWS）構築・24か月運用",
-    "Estimate version / 版数": "版数",
-    "Estimate date / 作成日": "作成日",
-    "Prepared by / 作成者": "作成者",
     "Claude (AI assistant), for platform engineering": "Claude（AIアシスタント）、プラットフォームエンジニアリング向け",
-    "Status / ステータス": "ステータス",
     "Draft / 作成中": "作成中",
-    "PM cost (% of development cost) / PM費率": "PM費率（開発費に対する%）",
     "Template default kept; the design docs give no reason to change it.": "テンプレート既定値。設計文書に変更する根拠がないため維持。",
-    "Contingency (% of cost) / 予備費率": "予備費率",
     "Template default kept. Identified risks from 02 §14 are added as line items (§2, Contingency).": "テンプレート既定値を維持。02 §14の特定済みリスクは明細として追加（§2 予備費）。",
-    "Apply contingency to recurring cost? / 継続費用にも予備費を適用": "継続費用にも予備費を適用",
     "Template default.": "テンプレート既定値。",
-    "Consumption tax rate / 消費税率": "消費税率",
     "Calculated once on each total and rounded down to JPY 1.": "各合計に対して1回計算し、1円未満切り捨て。",
-    "Recurring months in grand total / 総額に含める継続月数": "総額に含める継続月数",
     "Operation period of 2 years (2027-08 to 2029-07). 12- and 36-month views are in the multi-year table below.": "運用期間2年（2027年8月〜2029年7月）。12か月・36か月の試算は下の複数年試算表を参照。",
-    "Total initial cost (one-time) / 初期費用合計": "初期費用合計",
-    "All one-time costs incl. PM and contingency": "PM費・予備費を含む全初期費用",
-    "Total recurring cost – monthly / 継続費用（月額）": "継続費用（月額）",
-    "Recurring rows per month (+ contingency)": "継続費用の行の月額（＋予備費）",
-    "Total recurring cost – annual / 継続費用（年額）": "継続費用（年額）",
-    "Monthly × 12": "月額×12",
-    "Grand total (initial + 24 months recurring) / 総額": "総額（初期費用＋継続費用24か月分）",
-    "Tax calculated on this total": "この合計に対して消費税を計算",
     "The same initial cost with 12, 24 (the grand total above) and 36 months of recurring cost. Model inference is excluded in every view.":
         "同じ初期費用に、継続費用12か月・24か月（上記の総額）・36か月分を加えた試算。いずれもモデル利用料は含まない。",
     "Initial + first year": "初期費用＋初年度",
     "Initial + operation period (grand total)": "初期費用＋運用期間（総額）",
     "Initial + 3 years": "初期費用＋3年間",
-    "Line items not in any total (JPY) / 集計漏れ金額": "集計漏れ金額（円）",
-    "Rows with quantity but no amount / 単価未設定の行数": "単価未設定の行数",
     "CHECK (deliberate): the LiteLLM Enterprise licence placeholder has no price yet (01 Q-17, owner: Product owner). All other rows are priced.":
         "CHECK（意図的）：LiteLLM Enterpriseライセンスの仮行に価格が未設定（01 Q-17、オーナー：プロダクトオーナー）。その他の行はすべて価格設定済み。",
-    "Rows with unit 'one-time' marked Recurring / 一式×継続の行数": "一式×継続の行数",
-    "PM line items while PM % > 0 / PM費の二重計上": "PM費の二重計上",
     "The workbook could not be recalculated with LibreOffice in this environment (not installed). The Summary values above were computed independently in Python with the workbook's formulas (unit cost lookup, ROUND for PM and contingency, ROUNDDOWN for tax); Excel recalculates the workbook when it is opened.":
         "この環境にはLibreOfficeがないため、ブックの再計算はできませんでした。上記のサマリー値は、ブックと同じ計算式（単価参照、PM費・予備費のROUND、消費税のROUNDDOWN）を用いてPythonで独立に計算したものです。ExcelではブックをÉ開いた時点で再計算されます。".replace("É", ""),
-    "1. Phase-based costs / 工程別費用": "1. 工程別費用",
     "No rows: no data migration in 01/02 (A16)": "明細なし：01・02にデータ移行の定義なし（A16）",
-    "Subtotal – phase-based / 小計（工程別）": "小計（工程別）",
-    "One-time part = development cost": "初期費用部分＝開発費",
-    "2. Cross-cutting costs / 横断費用": "2. 横断費用",
     "No bottom-up PM rows": "積上げのPM明細なし",
-    "Project management: 10.0% of development cost / PM費（自動計算）": "PM費（自動計算：開発費の10.0%）",
-    "PM % × development cost": "PM費率×開発費",
     "LiteLLM Enterprise licence not priced yet": "LiteLLM Enterpriseライセンスは価格未設定",
     "Identified risks at expected value (02 §14)": "特定済みリスクを期待値で計上（02 §14）",
-    "Contingency buffer: 15.0% of initial and recurring cost / 予備費（自動計算）": "予備費（自動計算：初期費用・継続費用の15.0%）",
-    "Contingency % × cost before contingency": "予備費率×予備費控除前の費用",
-    "Subtotal – cross-cutting / 小計（横断）": "小計（横断）",
-    "Total (excl. tax) / 合計（税抜）": "合計（税抜）",
-    "Development cost (base for PM %) / 開発費": "開発費（PM費の算定基礎）",
-    "One-time costs of all phase-based categories": "工程別費用のうち初期費用の合計",
-    "Initial cost before contingency / 予備費控除前の初期費用": "予備費控除前の初期費用",
-    "All one-time costs except the Contingency category (incl. calculated PM)": "予備費カテゴリを除く全初期費用（自動計算のPM費を含む）",
-    "Recurring cost before contingency (monthly) / 予備費控除前の継続月額": "予備費控除前の継続月額",
-    "Used because contingency applies to recurring": "継続費用にも予備費を適用するため使用",
-    "Total one-time effort / 初期工数合計": "初期工数合計",
-    "person-months": "人月",
-    "Person-months + person-days ÷ 20 (One-time rows)": "人月＋人日÷20（初期費用の行）",
-    "Testing share of development cost / テスト比率": "テスト比率（開発費に対する割合）",
-    "Typical range 20–30%": "一般的な範囲は20〜30%",
     # ---- Estimate intro
-    "Subtotal = Quantity × Unit cost. **Recurring rows show the cost per month.** Prices for monthly fees and one-time items are entered in column J (Unit cost override) in Excel; here they are shown directly as the unit cost. The bold subtotal rows are for reading convenience. In Excel each category also has a blank spare row with formulas. [PL] = AWS Price List API offer file for the region, checked 2026-11-17; USD amounts are converted at JPY 160/USD.":
-        "小計＝数量×単価。**継続費用の行は月額です。** 月額料金・一式の価格はExcelではJ列（単価手入力）に入力しますが、ここでは単価として直接表示しています。太字の小計行は読みやすさのためのものです。Excelでは各カテゴリに数式入りの空行もあります。[PL]＝各リージョンのAWS Price List API価格ファイル（2026-11-17確認）。USD金額は1USD＝160円で換算。",
-    "1. PHASE-BASED COSTS / 工程別費用": "1. 工程別費用",
-    "2. CROSS-CUTTING COSTS / 横断費用": "2. 横断費用",
-    "Subtotal": "小計",
-    "per month": "月額",
+    "[PL] = AWS Price List API offer file for the region, checked 2026-11-17; USD amounts are converted at JPY 160/USD.":
+        "[PL]＝各リージョンのAWS Price List API価格ファイル（2026-11-17確認）。USD金額は1USD＝160円で換算。",
     "*No line items: 01 and 02 define no data migration; what the gateway replaces is open (01 Q-2).*":
         "*明細なし：01・02にデータ移行の定義がなく、ゲートウェイが置き換える対象も未確定（01 Q-2）。*",
-    "*No line items: PM is calculated on Summary (PM % x development cost).*":
-        "*明細なし：PM費はSummaryで計算（PM費率×開発費）。*",
     # ---- labor rows
     "Close the 20 open questions in 01 §9 and confirm assumptions AS-1–AS-21 with their 8 owner teams; update 01 to v1.0":
         "01 §9の未決事項20件を解決し、前提AS-1〜AS-21を8つのオーナーチームと確認、01をv1.0に更新",
@@ -183,9 +137,6 @@ JA = {
     "README doc set, 02 R-21. Sizing: 5 docs × 4 pd": "README記載の文書セット、02 R-21。算定：5文書×4人日",
     "User-facing docs 05, 08, 10 and editing of the set to the 11 §D checklist": "利用者向け文書05、08、10と、11 §Dチェックリストに沿った文書セット全体の編集",
     "README doc set, 11 §D": "README記載の文書セット、11 §D",
-    "User onboarding: guide and short video, 6 live sessions for pilot and GA cohorts, team-admin training (budgets, service-account keys)":
-        "利用者オンボーディング：ガイドと短い動画、パイロット・GA向けのライブ説明会6回、チーム管理者研修（予算、サービスアカウントキー）",
-    "01 §1.4, UC-3, UC-5; A-9 (≈5,000 employees). Sizing: 6 sessions × 1 pd + 4 pd material": "01 §1.4、UC-3、UC-5。A-9（従業員約5,000人）。算定：6回×1人日＋教材4人日",
     "Operations handover to on-call: 07 runbook walk-through and alert drills": "オンコールへの運用引き継ぎ：07ランブックの読み合わせとアラート訓練",
     "02 §10 on-call; 01 OPS-006": "02 §10 オンコール。01 OPS-006",
     "Pilot (1 month): onboard pilot teams, triage, fixes, findings into 08": "パイロット（1か月）：パイロットチームの受け入れ、問い合わせ対応、修正、知見の08への反映",
@@ -233,15 +184,11 @@ JA = {
     "Dev environment after GA (Tokyo)": "GA後の開発環境（東京）",
     "Staging environment after GA (Tokyo)": "GA後のステージング環境（東京）",
     "Fargate: LiteLLM gateway tasks": "Fargate：LiteLLMゲートウェイのタスク",
-    "02 §9 (min 3 tasks, 3 AZs; size open R-42); [CMP §4.9]; avg 4 = 3 off-peak, 6 at business-hour peak (A-9)": "02 §9（最小3タスク、3AZ、サイズは未確定R-42）、［CMP §4.9］。平均4＝閑散時3、業務時間帯のピーク時6（A-9）",
     "Fargate: in-VPC guardrail service (Presidio + classifier, CPU)": "Fargate：VPC内ガードレールサービス（Presidio＋分類器、CPU）",
-    "02 §2.2, §8, D-9; classifier not chosen (R-10), CPU inference assumed; GPU is contingency row R-10": "02 §2.2、§8、D-9。分類器は未選定（R-10）でCPU推論を前提。GPUは予備費のR-10の行",
     "Aurora PostgreSQL (writer + reader, db.r7g.large, Multi-AZ)": "Aurora PostgreSQL（ライター＋リーダー、db.r7g.large、マルチAZ）",
-    "02 §2.2, §7.1, §9 [CMP §4.7]; provisioned assumed (R-23); 90-day spend log ≈ 12 M rows ≈ 50 GB (R-1)": "02 §2.2、§7.1、§9［CMP §4.7］。プロビジョンド型を前提（R-23）。90日分の利用ログ 約1,200万行 約50GB（R-1）",
     "ElastiCache Valkey (2 × cache.m7g.large, Multi-AZ)": "ElastiCache Valkey（cache.m7g.large×2、マルチAZ）",
     "02 §2.2, §7.1 (counters only, no response cache); Valkey assumed (R-23)": "02 §2.2、§7.1（カウンターのみ、レスポンスキャッシュなし）。Valkeyを前提（R-23）",
     "Application Load Balancer (internet-facing)": "Application Load Balancer（インターネット向け）",
-    "02 §2.2, §6 (Route B, 600 s idle); LCU from ~0.5 TB/month processed + long-lived streams": "02 §2.2、§6（Route B、アイドル600秒）。LCUは月約0.5TBの処理量と長時間ストリームから算定",
     "AWS WAF regional web ACL": "AWS WAF リージョナルWeb ACL",
     "02 §8 WAF row: IP set, rate rule, IP reputation, Known Bad Inputs, CRS, admin-path and route-block rules (~12)": "02 §8 WAFの行：IPセット、レートルール、IPレピュテーション、Known Bad Inputs、CRS、管理パスとルート遮断のルール（約12）",
     "Interface VPC endpoints (11 × 3 AZs)": "インターフェイスVPCエンドポイント（11×3AZ）",
@@ -252,16 +199,12 @@ JA = {
     "02 §6, D-12 [CMP §4.6]; Entra/licence traffic only": "02 §6、D-12［CMP §4.6］。Entra／ライセンス確認の通信のみ",
     "NAT gateway (network-prod): incremental GB only": "NATゲートウェイ（network-prod）：GB課金の増分のみ",
     "Data transfer out to office/DC clients (responses)": "オフィス／DCのクライアントへのデータ転送（レスポンス）",
-    "Route B over internet (02 §6); 4 M responses × 20 KB SSE + 25 % overhead": "インターネット経由のRoute B（02 §6）。400万レスポンス×20KB（SSE）＋オーバーヘッド25%",
     "Secrets Manager": "Secrets Manager",
     "02 §7.1: master, salt, licence, DB, SSO client, CI admin key, Valkey AUTH, spare": "02 §7.1：マスター、ソルト、ライセンス、DB、SSOクライアント、CI管理キー、Valkey AUTH、予備",
     "KMS customer-managed keys": "KMSカスタマー管理キー",
     "S3 (metadata, spend export, CUR, ALB logs, archive)": "S3（メタデータ、利用額エクスポート、CUR、ALBログ、アーカイブ）",
-    "02 §7.1; metadata ~6 GB/month, batched writes (A18); 1 year hot then archive": "02 §7.1。メタデータ月約6GB、バッチ書き込み（A18）。1年間は通常保存、その後アーカイブ",
     "CloudWatch Logs, alarms and metrics": "CloudWatch Logs、アラーム、メトリクス",
-    "02 §7.1, §7.4: container INFO 6 GB, WAF 6 GB, VPC Flow 5 GB; 90 days hot; OBS-006 alarms": "02 §7.1、§7.4：コンテナINFOログ6GB、WAF 6GB、VPCフローログ5GB。90日間保持。OBS-006のアラーム",
     "Amazon Managed Service for Prometheus": "Amazon Managed Service for Prometheus",
-    "02 §2.2 metrics row; LiteLLM labels by team/key/model (cardinality assumption)": "02 §2.2 メトリクスの行。LiteLLMのチーム／キー／モデル別ラベル（系列数は前提値）",
     "Amazon Managed Grafana": "Amazon Managed Grafana",
     "02 §2.2 (OBS-003); users: platform 5 editors; on-call, SOC, FinOps 15 viewers (assumption)": "02 §2.2（OBS-003）。利用者：基盤チームの編集者5人、オンコール・SOC・FinOpsの閲覧者15人（前提値）",
     "ECR image storage": "ECRイメージ保存",
@@ -305,7 +248,6 @@ JA = {
     "Impact 0.025/h × 730 h + 500 GB in × 0.01 DT-premium = USD 23.25/month [PL Global Accelerator 2026-11-17]; build effort in the % buffer":
         "影響額 0.025/時 × 730時間 ＋ 受信500GB × 0.01（DTプレミアム）= 月USD 23.25［PL Global Accelerator 2026-11-17］。構築工数は%予備費に含む",
     "Risk R-1: spend-log table slows key lookups — partitioning or separate store": "リスクR-1：利用ログテーブルがキー照会を遅くする — パーティション化または別ストア",
-    "Impact 1.0 pm; Medium likelihood at expected volume (≈12 M rows / 90 days)": "影響額1.0人月。想定利用量（90日で約1,200万行）では発生可能性は中",
     "Risk R-10: Japanese classifier needs a GPU — SageMaker ml.g5.xlarge × 2 (2 AZs) in Tokyo": "リスクR-10：日本語分類器にGPUが必要 — 東京のSageMaker ml.g5.xlarge×2（2AZ）",
     "Impact 2 × 2.043/h × 730 h = USD 2,982.78/month [PL SageMaker Tokyo 2026-11-17]; CPU guardrail tasks would shrink (not netted)":
         "影響額 2 × 2.043/時 × 730時間 = 月USD 2,982.78［PL SageMaker 東京 2026-11-17］。CPUのガードレールタスクは減るが相殺していない",
@@ -318,38 +260,15 @@ JA = {
     "Risk AS-18: shared egress in network-prod not available — gateway's own Network Firewall + NAT (3 AZs)": "リスクAS-18：network-prodの共有出口経路が使えない — ゲートウェイ専用のNetwork Firewall＋NAT（3AZ）",
     "01 AS-18 (Low assumed = 25 %). Impact 3 × (0.395 + 0.062)/h × 730 h = USD 1,000.83/month [PL 2026-11-17]. Expected value = impact × likelihood (A7)":
         "01 AS-18（発生可能性：低＝25%と仮定）。影響額 3 × (0.395 + 0.062)/時 × 730時間 = 月USD 1,000.83［PL 2026-11-17］。期待値＝影響額×発生確率（A7）",
-    # ---- Rates, lists, rules
-    "Working days per month / 月間稼働日数: **20** (1 person-month = 20 person-days = 160 h)": "月間稼働日数：**20**（1人月＝20人日＝160時間）",
+    # ---- Rates
     "**OPEN ITEM (FinOps): there are no internal rates yet. These are the template's sample rates (indicative blended market rates, excl. tax), kept unchanged; replace them on the Rates sheet.**":
         "**【未決事項・FinOps】社内単価はまだありません。以下はテンプレートのサンプル単価（参考の平均相場、税抜）をそのまま使用したものです。Ratesシートで置き換えてください。**",
-    "rows": "行",
-    "No rate: prices in column J": "単価なし：価格はJ列",
-    "Unchanged from the template: units person-months / person-days / monthly fee / one-time; types One-time / Recurring; the 10 phase-based and 6 cross-cutting categories in the breakdown above.":
-        "テンプレートから変更なし：単位は人月／人日／月額／一式、種別は初期／継続、カテゴリは上記内訳の工程別10種と横断6種。",
-    "Unit cost / 単価": "単価",
-    "Override (column J) if entered, else role rate from Rates (monthly for person-months, daily for person-days)": "J列（単価手入力）があればその値、なければRatesの役割単価（人月は月単価、人日は日単価）",
-    "Subtotal / 小計": "小計",
-    "Quantity × Unit cost": "数量×単価",
-    "Development cost / 開発費": "開発費",
-    "Sum of one-time costs in phase-based categories": "工程別費用のうち初期費用の合計",
-    "Project management / PM費": "PM費",
-    "Contingency / 予備費": "予備費",
-    "Contingency % × initial cost before contingency, + contingency % × monthly recurring cost; plus identified-risk line items": "予備費率×予備費控除前の初期費用＋予備費率×継続月額、および特定済みリスクの明細",
-    "Total initial cost / 初期費用": "初期費用合計",
-    "All one-time costs (phase-based + cross-cutting, incl. PM and contingency)": "全初期費用（工程別＋横断、PM費・予備費を含む）",
-    "Recurring – monthly / 継続月額": "継続月額",
-    "Sum of recurring rows (+ recurring contingency)": "継続費用の行の合計（＋継続費用の予備費）",
-    "Grand total / 総額": "総額",
-    "Initial cost + monthly recurring × 24 months": "初期費用＋継続月額×24か月",
-    "Consumption tax / 消費税": "消費税",
-    "Each total × tax rate, calculated once per total, rounded down to JPY 1": "各合計×税率。合計ごとに1回計算し、1円未満切り捨て",
     # ---- model usage
     "Model inference is a variable cost that LiteLLM charges back to the teams that use it (01 CST-007, 02 §5), so it is an exclusion (B1) and not part of the totals above. This table sizes it for budgeting by the teams and FinOps. Prices are the Bedrock on-demand prices for the `jp.` geographic cross-Region profiles (the non-global 'Standard' SKUs, about 10 % above Global) and the In-Region Tokyo prices, from [PL] AmazonBedrock and AmazonBedrockFoundationModels, ap-northeast-1, checked 2026-11-17.":
         "モデル利用料はLiteLLMが利用チームに配賦する変動費（01 CST-007、02 §5）のため対象外（B1）とし、上記の合計には含めません。本表は各チームとFinOpsが予算を立てるための試算です。単価は`jp.`地域クロスリージョン推論プロファイル（グローバル以外の「Standard」SKU、グローバルより約10%高い）と東京リージョン内のBedrockオンデマンド価格で、[PL] AmazonBedrockおよびAmazonBedrockFoundationModels（ap-northeast-1、2026-11-17確認）によります。",
     "Note: [PL] lists Claude Haiku 5.5 at USD 0.11 / 0.55 per million input / output tokens, below Claude Haiku 4.5 (USD 1.10 / 5.50). The estimate uses the listed price; re-check it before the budget is fixed. MDL-011 (Azure OpenAI) is not priced (B3).":
         "注：[PL]ではClaude Haiku 5.5が入力／出力100万トークンあたりUSD 0.11／0.55で、Claude Haiku 4.5（USD 1.10／5.50）より安く掲載されています。本見積は掲載価格を使用しますが、予算確定前に再確認してください。MDL-011（Azure OpenAI）は試算していません（B3）。",
     "Active coding-agent users per month": "月間のアクティブなコーディングエージェント利用者数",
-    "CMP A-9: ~5,000 employees, ~300 concurrent at peak (low = peak concurrency, expected 20 %, high 40 % of employees)": "CMP A-9：従業員約5,000人、ピーク同時約300人（低＝ピーク同時数、想定＝従業員の20%、高＝40%）",
     "Active days per user per month": "利用者1人あたりの月間利用日数",
     "Claude Code cost docs (code.claude.com/docs/en/costs, checked 2026-11-17): enterprise average ≈ USD 13 per developer per active day and USD 150–250 per month → 12–19 active days":
         "Claude Codeのコストに関する文書（code.claude.com/docs/en/costs、2026-11-17確認）：企業平均は開発者1人の利用日あたり約USD 13、月USD 150〜250 → 月12〜19日",
@@ -405,8 +324,6 @@ JA = {
     "11 interface endpoints × 3 AZs": "インターフェイスエンドポイント11×3AZ",
     "TGW attachment": "TGWアタッチメント",
     "GuardDuty (18 vCPU), Security Hub, Config": "GuardDuty（18vCPU）、Security Hub、Config",
-    "Comparison with 02 §12: the comparison's sample baseline of about USD 380 a month [CMP §7.1] covers one small environment before hardening. This design adds 3-AZ production, the guardrail service, 11 interface endpoints per AZ, the Osaka standby, observability and threat detection, and keeps staging at production topology; production alone is about USD 2,870 a month.":
-        "02 §12との比較：比較資料のサンプルの基準値（月約USD 380）［CMP §7.1］は、堅牢化前の小規模な1環境分です。本設計は3AZの本番、ガードレールサービス、AZごとに11のインターフェイスエンドポイント、大阪のスタンバイ、監視と脅威検知を加え、ステージングも本番と同構成としているため、本番だけで月約USD 2,870になります。",
     # ---- open items
     "Product owner": "プロダクトオーナー",
     "LiteLLM Enterprise licence price, incl. project months (01 Q-17) — the deliberate check failure": "LiteLLM Enterpriseライセンス価格（プロジェクト期間を含む、01 Q-17） — 意図的なチェック不合格の要因",
@@ -450,8 +367,6 @@ JA = {
         "docs/en/は変更していません。以下は設計の費用を試算する中で見つかった不足や不整合で、それぞれのオーナーが01／02で解消してください。",
     "02 §6 lists 10 interface endpoints and allows egress only to Entra and the licence endpoint, but 02 §2.2 sends LiteLLM metrics to Amazon Managed Service for Prometheus. Remote write from private subnets needs an `aps-workspaces` endpoint (or an egress rule). The estimate prices 11 endpoints (matching 02 §12 'about 11').":
         "02 §6はインターフェイスエンドポイントを10個とし、出口をEntraとライセンスエンドポイントに限定していますが、02 §2.2ではLiteLLMのメトリクスをAmazon Managed Service for Prometheusに送ります。プライベートサブネットからのリモート書き込みには`aps-workspaces`エンドポイント（または出口ルール）が必要です。本見積は11エンドポイントで試算しています（02 §12の「約11」と一致）。",
-    "CMP A-9 / 01 PRF-M02 use 50–200 RPS as the sizing basis. Sustained 50 RPS is about 130 million requests a month; at the per-request token volume of a coding agent (≈ 66k tokens) that would be model spend of several million USD a month, far above the user-based forecast in §7 (≈ 4 million requests). PRF-M02 should be set from a usage forecast (01 Q-7). Fixed capacity here is sized to the peak; per-request charges use the forecast.":
-        "CMP A-9／01 PRF-M02は50〜200 RPSをサイジングの根拠としています。50 RPSが継続すると月約1億3,000万リクエストで、コーディングエージェントの1リクエストあたりのトークン量（約6.6万）ではモデル利用料が月数百万USDとなり、§7の利用者数に基づく予測（約400万リクエスト）を大きく上回ります。PRF-M02は利用量予測から設定すべきです（01 Q-7）。本見積では固定容量はピークに合わせ、従量部分は予測を使っています。",
     "02 §12 says no price was re-checked and R-46 lists the unestimated items. This estimate prices them; R-46 can point to it once reviewed.":
         "02 §12は価格を再確認していないとし、R-46は未試算の項目を挙げています。本見積はそれらを試算しているため、レビュー後にR-46から本見積を参照できます。",
     "02 §2.2 and §9 say ElastiCache is 'rebuilt cold' in Osaka without saying whether the cluster is created at failover or kept running. It affects RTO (AVL-M02) and cost; the estimate assumes it is created at failover.":
